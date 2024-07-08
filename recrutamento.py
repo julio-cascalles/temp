@@ -16,7 +16,7 @@ class Candidato(ElementoProcSeletivo):
         s1, s2 = ( set(h.nome for h in obj.habilidades) for obj in [self, vaga])
         return len(s1.intersection(s2)) / len(vaga.habilidades) * 100
     
-
+#-------------- Demonstração do uso das classes acima: --------------------------------------
 def anuncio(vaga: Vaga, candidato: Candidato) -> str:
     return '\nVaga: {}\n\nRequisitos:{}\nSalário:{:_.2f}\nCompatibilidade:{:.2f}%\n'.format(
         vaga.titulo, ','.join(h.nome for h in vaga.habilidades), 
