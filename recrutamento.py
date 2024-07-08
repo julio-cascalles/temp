@@ -24,7 +24,7 @@ def anuncio(vaga: Vaga, candidato: Candidato) -> str:
     )
 
 
-PYTHON, SQL, DEJANGO = [ Habilidade(N, V) for N, V in (
+PYTHON, SQL, DEJANGO = [ Habilidade(nome, valor) for nome, valor in (
     ('Python', 4500), ('SQL', 3700), ('Dejango', 1000)
 ) ]
 
