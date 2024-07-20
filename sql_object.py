@@ -309,7 +309,7 @@ class SubSelect(Select):
 
 
 
-def combo() -> tuple:
+def test_varios_objetos() -> tuple:
     def select_ator() -> Select:
         return Select('Ator a', elenco=ForeignKey('Elenco'),
             nome=NamedField('nome_ator')
@@ -331,7 +331,7 @@ def combo() -> tuple:
         )
     return select_ator(), select_elenco(), melhores_filmes(), select_filme()
 
-def simple_query():
+def teste_objeto_simples():
     return Select(
         'Ator a', nome=NamedField('nome_ator'),
         elenco=Select(
@@ -354,26 +354,26 @@ def simple_query():
 if __name__ == "__main__":
     Select.join_type = JoinType.LEFT
     OrderBy.sort = SortType.DESC
-    a, e, m, f = combo()
-    print('====== [1] melhores_filmes ======================================')
+    a, e, m, f = test_varios_objetos()
+    print('------- [1] melhores_filmes ------------------------------------')
     print(m)
-    print('====== [2] ator + elenco ========================================')
+    print('------- [2] ator + elenco --------------------------------------')
     print( a + e )
-    print('====== [3] elenco + filme =======================================')
+    print('------- [3] elenco + filme -------------------------------------')
     print( e + f )
-    print('====== [4] filme( id=melhores_filmes ) ==========================')
+    print('------- [4] filme( id=melhores_filmes ) ------------------------')
     f = f(id=m) # <<-- Coloca `melhores_filmes` como sub-query de `id`
                 #       f.id IN (SELECT ...)
     print(e + f)
-    print('====== [5] ator + elenco + filme ================================')
+    print('------- [5] ator + elenco + filme ------------------------------')
     soma = a + (e + f)
     #          ^
     #          |
     #          +------  Elenco é somado com Filme ANTES de Ator,
     #                  porque Ator e Filme não tem relacionamento
     print(soma)
-    print('=======[6] simple_query ==========================================')
-    query = simple_query()
+    print('------- [6] objeto_simples -------------------------------------')
+    query = teste_objeto_simples()
     print(query)
-    print('-------- simple_query == (ator + elenco + filme) ?? --------------')
-    print('>>>', query == soma)
+    print('-------- objeto_simples == (ator + elenco + filme) ?? ----------')
+    print('>'*20, 'Objetos iguais!' if query == soma else 'DIFERENTES...')
