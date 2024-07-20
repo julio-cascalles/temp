@@ -167,6 +167,7 @@ class Options:
         `logical_separator` must be AND or OR
         """
         conditions: list[str] = []
+        child: Where
         for field, child in self.__children.items():
             conditions.append(' {} {} '.format(
                 Field.format(field, main), child.expr
@@ -174,6 +175,18 @@ class Options:
         main.values.setdefault(WHERE, []).append(
             '(' + logical_separator.join(conditions) + ')'
         )
+
+
+class Between:
+    def __init__(self, start, end):
+        if start > end:
+            start, end = end, start
+        self.start = start
+        self.end = end
+
+    def add(self, name: str, main:SQLObject):
+        Where.gte(self.start).add(name, main),
+        Where.lte(self.end).add(name, main)
 
 
 class SortType(Enum):
@@ -265,6 +278,10 @@ class Select(SQLObject):
     def __add__(self, other: SQLObject):
         foreign_field = self.linked_tables.get(other.table_name)
         if not foreign_field:
+            foreign_field = other.linked_tables.get(self.table_name)
+            if foreign_field:
+                self.add(foreign_field, other)
+                return other
             raise ValueError(f'No relationship found between {self.table_name} and {other.table_name}.')
         other.add(foreign_field, self)
         return self
@@ -309,10 +326,10 @@ class SubSelect(Select):
 
 
 
-def test_varios_objetos() -> tuple:
+def teste_varios_objetos() -> tuple:
     def select_ator() -> Select:
         return Select('Ator a', elenco=ForeignKey('Elenco'),
-            nome=NamedField('nome_ator')
+            nome=NamedField('nome_ator'), # idade=Between(45, 69)
         )
     def select_elenco() -> Select:
         return Select(
@@ -331,9 +348,8 @@ def test_varios_objetos() -> tuple:
         )
     return select_ator(), select_elenco(), melhores_filmes(), select_filme()
 
-def teste_objeto_simples():
-    return Select(
-        'Ator a', nome=NamedField('nome_ator'),
+def teste_objeto_unico():
+    return Select('Ator a',
         elenco=Select(
             Elenco=Table('papel'), id=PrimaryKey,
             filme=Select(
@@ -347,14 +363,15 @@ def teste_objeto_simples():
                     genero=Where.eq('Sci-Fi'), premios=Where.like('Oscar')
                 )
             ) # --- Filme
-        ) # ------- Elenco
+        ), # ------- Elenco
+        nome=NamedField('nome_ator'),
     ) # ----------- Ator
 
 
 if __name__ == "__main__":
     Select.join_type = JoinType.LEFT
     OrderBy.sort = SortType.DESC
-    a, e, m, f = test_varios_objetos()
+    a, e, m, f = teste_varios_objetos()
     print('------- [1] melhores_filmes ------------------------------------')
     print(m)
     print('------- [2] ator + elenco --------------------------------------')
@@ -366,14 +383,14 @@ if __name__ == "__main__":
                 #       f.id IN (SELECT ...)
     print(e + f)
     print('------- [5] ator + elenco + filme ------------------------------')
-    soma = a + (e + f)
+    soma = a + (f + e)
     #          ^
     #          |
     #          +------  Elenco é somado com Filme ANTES de Ator,
     #                  porque Ator e Filme não tem relacionamento
     print(soma)
-    print('------- [6] objeto_simples -------------------------------------')
-    query = teste_objeto_simples()
+    print('------- [6] objeto `query` -------------------------------------')
+    query = teste_objeto_unico()
     print(query)
-    print('-------- objeto_simples == (ator + elenco + filme) ?? ----------')
+    print('-------- query == (ator + elenco + filme) ?? ----------')
     print('>'*20, 'Objetos iguais!' if query == soma else 'DIFERENTES...')
