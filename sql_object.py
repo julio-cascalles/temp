@@ -9,7 +9,7 @@ KEYWORD = {
     'LIMIT': (' ', ''),
 }
 SELECT, FROM, WHERE, GROUP_BY, ORDER_BY, LIMIT = KEYWORD.keys()
-
+USUAL_KEYS = [SELECT, WHERE, GROUP_BY, ORDER_BY]
 
 class SQLObject:
     def __init__(self, table_name: str=''):
@@ -37,6 +37,17 @@ class SQLObject:
     def table_name(self) -> str:
         return self.values[FROM][0].split()[0]
  
+    def delete(self, search: str, keys: list=USUAL_KEYS):
+        for key in keys:
+            source: list = self.values.get(key, [])
+            found = False
+            for i, item in enumerate(source):
+                if search in item:
+                    found = True
+                    break
+            if found:
+                source.pop(i)
+
 
 class Function:
     ...
@@ -338,8 +349,8 @@ class Select(SQLObject):
                 PrimaryKey.add(f2, obj2)
                 ForeignKey(obj2.table_name).add(f1, obj1)
             else:
-                obj = Select(item)
-                for key in (SELECT, WHERE, GROUP_BY, ORDER_BY):
+                obj = cls(item)
+                for key in USUAL_KEYS:
                     if not key in values:
                         continue
                     separator = KEYWORD[key][0].format(
@@ -351,7 +362,6 @@ class Select(SQLObject):
                         ) if re.findall(f'^[( ]*{obj.alias}\.', fld)
                     ]
                     obj.values[key] = fields
-                # obj.values[WHERE] = values[WHERE].split(' AND ')
                 result[obj.alias] = obj
         return list( result.values() )
 
@@ -364,78 +374,77 @@ class SubSelect(Select):
 
 
 # ---------------- TESTES: -----------------------------
-def melhores_filmes() -> SubSelect:
-    return SubSelect( # ---- Filmes com boas críticas
-        'Critica c',  filme=[GroupBy, Distinct], nota=Having.avg(Where.gt(4.5))
-    )
-
-def teste_varios_objetos() -> tuple:
-    def select_ator() -> Select:
-        return Select('Ator a', elenco=ForeignKey('Elenco'),
-            nome=NamedField('nome_ator'), idade=Between(45, 69)
-        )
-    def select_elenco() -> Select:
-        return Select(
-            Elenco=Table('papel'), id=PrimaryKey, filme=ForeignKey('Filme'),
-        )
-    def select_filme() -> Select:
-        return Select('Filme f', titulo=Field,
-            lancamento=[OrderBy, Field], id=PrimaryKey,
-            OR=Options(
-                genero=Where.eq('Sci-Fi'), premios=Where.like('Oscar')
-            )
-        )
-    return select_ator(), select_elenco(), select_filme()
-
-def resultado_esperado() -> Select:
-    return Select('Ator a', idade=Between(45, 69),
-        elenco=Select(
-            Elenco=Table('papel'), id=PrimaryKey,
-            filme=Select(
-                'Filme f', titulo=Field,
-                lancamento=[OrderBy, Field],
-                id=[
-                    SubSelect(
-                        'Critica c', filme=[GroupBy, Distinct],
-                        nota=Having.avg(Where.gt(4.5))
-                    ),
-                    PrimaryKey
-                ], OR=Options(
-                    genero=Where.eq('Sci-Fi'), premios=Where.like('Oscar')
-                )
-            ) # --- Filme
-        ), # ------- Elenco
-        nome=NamedField('nome_ator'),
-    ) # ----------- Ator
-
-def teste_parse():
-    return Select.parse('''
-        SELECT
-                ele.papel,
-                f.titulo,
-                f.lancamento,
-                a.nome as nome_ator
-        FROM
-                Ator a
-                LEFT JOIN Elenco ele ON (a.elenco = ele.id)
-                LEFT JOIN Filme f ON (ele.filme = f.id)
-        WHERE
-                a.idade >= 45
-                AND a.idade <= 69
-                AND ( f.genero = 'Sci-Fi' OR f.premios LIKE '%Oscar%' )
-        ORDER BY
-                f.lancamento DESC
-    ''')
-
-
 if __name__ == "__main__":
+    def melhores_filmes() -> SubSelect:
+        return SubSelect( # ---- Filmes com boas críticas
+            'Critica c',  filme=[GroupBy, Distinct], nota=Having.avg(Where.gt(4.5))
+        )
+
+    def teste_varios_objetos() -> tuple:
+        def select_ator() -> Select:
+            return Select('Ator a', elenco=ForeignKey('Elenco'),
+                nome=NamedField('nome_ator'), idade=Between(45, 69)
+            )
+        def select_elenco() -> Select:
+            return Select(
+                Elenco=Table('papel'), id=PrimaryKey, filme=ForeignKey('Filme'),
+            )
+        def select_filme() -> Select:
+            return Select('Filme f', titulo=Field,
+                lancamento=[OrderBy, Field], id=PrimaryKey,
+                OR=Options(
+                    genero=Where.eq('Sci-Fi'), premios=Where.like('Oscar')
+                ), diretor=[Where.like('Coppola'), Field, OrderBy]
+            )
+        return select_ator(), select_elenco(), select_filme()
+
+    def resultado_esperado() -> Select:
+        return Select('Ator a', idade=Between(45, 69),
+            elenco=Select(
+                Elenco=Table('papel'), id=PrimaryKey,
+                filme=Select(
+                    'Filme f', titulo=Field,
+                    lancamento=[OrderBy, Field],
+                    id=[
+                        SubSelect(
+                            'Critica c', filme=[GroupBy, Distinct],
+                            nota=Having.avg(Where.gt(4.5))
+                        ),
+                        PrimaryKey
+                    ], OR=Options(
+                        genero=Where.eq('Sci-Fi'), premios=Where.like('Oscar')
+                    )
+                ) # --- Filme
+            ), # ------- Elenco
+            nome=NamedField('nome_ator'),
+        ) # ----------- Ator
+
+    def teste_parse():
+        return Select.parse('''
+            SELECT
+                    ele.papel,
+                    f.titulo,
+                    f.lancamento,
+                    a.nome as nome_ator
+            FROM
+                    Ator a
+                    LEFT JOIN Elenco ele ON (a.elenco = ele.id)
+                    LEFT JOIN Filme f ON (ele.filme = f.id)
+            WHERE
+                    a.idade >= 45
+                    AND a.idade <= 69
+                    AND ( f.genero = 'Sci-Fi' OR f.premios LIKE '%Oscar%' )
+            ORDER BY
+                    f.lancamento DESC
+        ''')
     Select.join_type = JoinType.LEFT
     OrderBy.sort = SortType.DESC
     print('------- [1] melhores_filmes ------------------------------------')
     m = melhores_filmes()
     print(m)
-    for func in (teste_parse, teste_varios_objetos):
+    for func in [teste_parse, teste_varios_objetos]:
         a, e, f = func()
+        f.delete('diretor')
         print('------- [2] ator + elenco --------------------------------------')
         print( a + e )
         print('------- [3] elenco + filme -------------------------------------')
