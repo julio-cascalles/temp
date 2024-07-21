@@ -4,8 +4,8 @@ KEYWORD = {
     'SELECT': (',{}', 'SELECT *'),
     'FROM': ('{}', ''),
     'WHERE': ('{}AND ', ''),
-    'GROUP BY': (',{} ', ''),
-    'ORDER BY': (',{} ', ''),
+    'GROUP BY': (',{}', ''),
+    'ORDER BY': (',{}', ''),
     'LIMIT': (' ', ''),
 }
 SELECT, FROM, WHERE, GROUP_BY, ORDER_BY, LIMIT = KEYWORD.keys()
@@ -247,6 +247,7 @@ class JoinType(Enum):
 
 class Select(SQLObject):
     join_type: JoinType = JoinType.INNER
+    REGEX = None
 
     def __init__(self, table_name: str='', **values):
         super().__init__(table_name)
@@ -264,11 +265,11 @@ class Select(SQLObject):
                     main.values[key] = old_values + [value]
         update_values(
             FROM, [
-                '{0}JOIN {1} ON ({2}.{3} = {4}.{5})'.format(
-                    self.join_type.value, # -------- {0}
-                    self.table_name, # ------------- {1}
-                    main.alias, name, # ------------ {2} {3}
-                    self.alias, self.key_field # --- {4} {5} 
+                '{jt}JOIN {tb} {a2} ON ({a1}.{f1} = {a2}.{f2})'.format(
+                    jt=self.join_type.value,
+                    tb=self.table_name,
+                    a1=main.alias, f1=name,
+                    a2=self.alias, f2=self.key_field
                 )
             ] + self.values[FROM][1:]
         )
@@ -318,6 +319,42 @@ class Select(SQLObject):
         self.values.setdefault(LIMIT, result)
         return self
 
+    @classmethod
+    def parse(cls, txt: str) -> list[SQLObject]:
+        import re
+        txt = re.sub(' +', ' ', re.sub('\n|\t', ' ', txt))
+        if not cls.REGEX:
+            keywords = '|'.join(KEYWORD)
+            cls.REGEX = re.compile(f'({keywords})', re.IGNORECASE)
+        tokens = [t.strip() for t in cls.REGEX.split(txt) if t.strip()]
+        values = {k: v for k, v in zip(tokens[::2], tokens[1::2])}
+        tables = [t.strip() for t in re.split('JOIN|LEFT|RIGHT|ON', values[FROM]) if t.strip()]
+        result = {}
+        for item in tables:
+            if '=' in item:
+                a1, f1, a2, f2 = [r.strip() for r in re.split('[().=]', item) if r]
+                obj1: SQLObject = result[a1]
+                obj2:SQLObject = result[a2]
+                PrimaryKey.add(f2, obj2)
+                ForeignKey(obj2.table_name).add(f1, obj1)
+            else:
+                obj = Select(item)
+                for key in (SELECT, WHERE, GROUP_BY, ORDER_BY):
+                    if not key in values:
+                        continue
+                    separator = KEYWORD[key][0].format(
+                        ' ' if key == WHERE else ''
+                    )
+                    fields = [
+                        fld.strip() for fld in re.split(
+                            separator, values[key]
+                        ) if re.findall(f'^[( ]*{obj.alias}\.', fld)
+                    ]
+                    obj.values[key] = fields
+                # obj.values[WHERE] = values[WHERE].split(' AND ')
+                result[obj.alias] = obj
+        return list( result.values() )
+
 
 class SubSelect(Select):
     def add(self, name: str, main: SQLObject):
@@ -326,18 +363,20 @@ class SubSelect(Select):
 
 
 
+# ---------------- TESTES: -----------------------------
+def melhores_filmes() -> SubSelect:
+    return SubSelect( # ---- Filmes com boas críticas
+        'Critica c',  filme=[GroupBy, Distinct], nota=Having.avg(Where.gt(4.5))
+    )
+
 def teste_varios_objetos() -> tuple:
     def select_ator() -> Select:
         return Select('Ator a', elenco=ForeignKey('Elenco'),
-            nome=NamedField('nome_ator'), # idade=Between(45, 69)
+            nome=NamedField('nome_ator'), idade=Between(45, 69)
         )
     def select_elenco() -> Select:
         return Select(
             Elenco=Table('papel'), id=PrimaryKey, filme=ForeignKey('Filme'),
-        )
-    def melhores_filmes() -> SubSelect:
-        return SubSelect( # ---- Filmes com boas críticas
-            'Critica c',  filme=[GroupBy, Distinct], nota=Having.avg(Where.gt(4.5))
         )
     def select_filme() -> Select:
         return Select('Filme f', titulo=Field,
@@ -346,19 +385,21 @@ def teste_varios_objetos() -> tuple:
                 genero=Where.eq('Sci-Fi'), premios=Where.like('Oscar')
             )
         )
-    return select_ator(), select_elenco(), melhores_filmes(), select_filme()
+    return select_ator(), select_elenco(), select_filme()
 
-def teste_objeto_unico():
-    return Select('Ator a',
+def resultado_esperado() -> Select:
+    return Select('Ator a', idade=Between(45, 69),
         elenco=Select(
             Elenco=Table('papel'), id=PrimaryKey,
             filme=Select(
                 'Filme f', titulo=Field,
                 lancamento=[OrderBy, Field],
-                id=[SubSelect(
+                id=[
+                    SubSelect(
                         'Critica c', filme=[GroupBy, Distinct],
                         nota=Having.avg(Where.gt(4.5))
-                    ), PrimaryKey
+                    ),
+                    PrimaryKey
                 ], OR=Options(
                     genero=Where.eq('Sci-Fi'), premios=Where.like('Oscar')
                 )
@@ -367,30 +408,50 @@ def teste_objeto_unico():
         nome=NamedField('nome_ator'),
     ) # ----------- Ator
 
+def teste_parse():
+    return Select.parse('''
+        SELECT
+                ele.papel,
+                f.titulo,
+                f.lancamento,
+                a.nome as nome_ator
+        FROM
+                Ator a
+                LEFT JOIN Elenco ele ON (a.elenco = ele.id)
+                LEFT JOIN Filme f ON (ele.filme = f.id)
+        WHERE
+                a.idade >= 45
+                AND a.idade <= 69
+                AND ( f.genero = 'Sci-Fi' OR f.premios LIKE '%Oscar%' )
+        ORDER BY
+                f.lancamento DESC
+    ''')
+
 
 if __name__ == "__main__":
     Select.join_type = JoinType.LEFT
     OrderBy.sort = SortType.DESC
-    a, e, m, f = teste_varios_objetos()
     print('------- [1] melhores_filmes ------------------------------------')
+    m = melhores_filmes()
     print(m)
-    print('------- [2] ator + elenco --------------------------------------')
-    print( a + e )
-    print('------- [3] elenco + filme -------------------------------------')
-    print( e + f )
-    print('------- [4] filme( id=melhores_filmes ) ------------------------')
-    f = f(id=m) # <<-- Coloca `melhores_filmes` como sub-query de `id`
-                #       f.id IN (SELECT ...)
-    print(e + f)
-    print('------- [5] ator + elenco + filme ------------------------------')
-    soma = a + (f + e)
-    #          ^
-    #          |
-    #          +------  Elenco é somado com Filme ANTES de Ator,
-    #                  porque Ator e Filme não tem relacionamento
-    print(soma)
-    print('------- [6] objeto `query` -------------------------------------')
-    query = teste_objeto_unico()
-    print(query)
-    print('-------- query == (ator + elenco + filme) ?? ----------')
-    print('>'*20, 'Objetos iguais!' if query == soma else 'DIFERENTES...')
+    for func in (teste_parse, teste_varios_objetos):
+        a, e, f = func()
+        print('------- [2] ator + elenco --------------------------------------')
+        print( a + e )
+        print('------- [3] elenco + filme -------------------------------------')
+        print( e + f )
+        print('------- [4] filme( id=melhores_filmes ) ------------------------')
+        f = f(id=m) # <<-- Coloca `melhores_filmes` como sub-query de `id`
+                    #       f.id IN (SELECT ...)
+        print(e + f)
+        print('------- [5] ator + elenco + filme ------------------------------')
+        query = a + (f + e)
+        #          ^
+        #          |
+        #          +------  Elenco é somado com Filme ANTES de Ator,
+        #                  porque Ator e Filme não tem relacionamento
+        print(query)
+        assert query == resultado_esperado()
+    print('*'*50)
+    print('Passou em todos os testes!'.center(50, '='))
+    print('*'*50)
