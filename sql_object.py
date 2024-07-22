@@ -39,14 +39,11 @@ class SQLObject:
  
     def delete(self, search: str, keys: list=USUAL_KEYS):
         for key in keys:
-            source: list = self.values.get(key, [])
-            found = False
-            for i, item in enumerate(source):
-                if search in item:
-                    found = True
-                    break
-            if found:
-                source.pop(i)
+            result = []
+            for item in self.values.get(key, []):
+                if search not in item:
+                    result.append(item)
+            self.values[key] = result
 
 
 class Function:
@@ -359,9 +356,12 @@ class Select(SQLObject):
                     fields = [
                         fld.strip() for fld in re.split(
                             separator, values[key]
-                        ) if re.findall(f'^[( ]*{obj.alias}\.', fld)
+                        ) if len(tables) == 1
+                        or re.findall(f'^[( ]*{obj.alias}\.', fld)
                     ]
-                    obj.values[key] = fields
+                    obj.values[key] = [
+                        f'{obj.alias}.{f}' if not '.' in f else f for f in fields
+                    ]
                 result[obj.alias] = obj
         return list( result.values() )
 
@@ -437,14 +437,34 @@ if __name__ == "__main__":
             ORDER BY
                     f.lancamento DESC
         ''')
+
+    def teste_combo():
+        """
+        Combina parse com objetos
+        """
+        ator = Select.parse('SELECT nome as nome_ator FROM Ator a')[0]
+        ator( elenco=ForeignKey('Elenco'), idade=Between(45, 69) )
+        elenco = Select.parse('SELECT papel FROM Elenco')[0]
+        elenco(filme=ForeignKey('Filme'), id=PrimaryKey)
+        filme = Select.parse("""
+            SELECT titulo, lancamento FROM Filme f ORDER BY lancamento DESC
+            WHERE ( f.genero = 'Sci-Fi' OR f.premios LIKE '%Oscar%' ) GROUP BY diretoR
+        """)[0]  #                                                              ^
+                 #                                                              |
+                 #   `diretor` será excluído com o DELETE do teste -------------+
+                 #
+        filme(id=PrimaryKey)
+        return ator, elenco, filme
+
     Select.join_type = JoinType.LEFT
     OrderBy.sort = SortType.DESC
     print('------- [1] melhores_filmes ------------------------------------')
     m = melhores_filmes()
     print(m)
-    for func in [teste_parse, teste_varios_objetos]:
+    for func in [teste_parse, teste_varios_objetos, teste_combo]:
         a, e, f = func()
         f.delete('diretor')
+        print(func.__name__.center(64, ':'))
         print('------- [2] ator + elenco --------------------------------------')
         print( a + e )
         print('------- [3] elenco + filme -------------------------------------')
@@ -455,9 +475,9 @@ if __name__ == "__main__":
         print(e + f)
         print('------- [5] ator + elenco + filme ------------------------------')
         query = a + (f + e)
-        #          ^
-        #          |
-        #          +------  Elenco é somado com Filme ANTES de Ator,
+        #           ^
+        #           |
+        #           +------  Elenco é somado com Filme ANTES de Ator,
         #                  porque Ator e Filme não tem relacionamento
         print(query)
         assert query == resultado_esperado()
