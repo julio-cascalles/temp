@@ -431,9 +431,8 @@ if __name__ == "__main__":
                     LEFT JOIN Elenco ele ON (a.elenco = ele.id)
                     LEFT JOIN Filme f ON (ele.filme = f.id)
             WHERE
-                    a.idade >= 45
-                    AND a.idade <= 69
-                    AND ( f.genero = 'Sci-Fi' OR f.premios LIKE '%Oscar%' )
+                    ( f.genero = 'Sci-Fi' OR f.premios LIKE '%Oscar%' )
+                    AND a.idade >= 45 AND a.idade <= 69
             ORDER BY
                     f.lancamento DESC
         ''')
