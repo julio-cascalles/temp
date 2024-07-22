@@ -17,7 +17,6 @@ class SQLObject:
         self.values = {}
         self.key_field = ''
         self.set_table(table_name)
-        self.linked_tables = {}
 
     def set_table(self, table_name: str):
         if not table_name:
@@ -119,11 +118,19 @@ class PrimaryKey:
 
 
 class ForeignKey:
+    references = {}
+
     def __init__(self, table_name: str):
         self.table_name = table_name
 
     def add(self, name: str, main: SQLObject):
-        main.linked_tables[self.table_name] = name
+        key = f'{main.table_name}_{self.table_name}'
+        ForeignKey.references[key] = name
+
+    @classmethod
+    def find(cls, obj1: SQLObject, obj2: SQLObject) -> list:
+        key = f'{obj1.table_name}_{obj2.table_name}'
+        return cls.references.get(key, '').split('_')
 
 
 class Where:
@@ -285,13 +292,17 @@ class Select(SQLObject):
             update_values(key, self.values.get(key, []))
 
     def __add__(self, other: SQLObject):
-        foreign_field = self.linked_tables.get(other.table_name)
+        foreign_field, *primary_key = ForeignKey.find(self, other)
         if not foreign_field:
-            foreign_field = other.linked_tables.get(self.table_name)
+            foreign_field, *primary_key = ForeignKey.find(other, self)
             if foreign_field:
+                if primary_key:
+                    PrimaryKey.add(primary_key[0], self)
                 self.add(foreign_field, other)
                 return other
             raise ValueError(f'No relationship found between {self.table_name} and {other.table_name}.')
+        elif primary_key:
+            PrimaryKey.add(primary_key[0], other)
         other.add(foreign_field, self)
         return self
 
@@ -441,10 +452,15 @@ if __name__ == "__main__":
         """
         Combina parse com objetos
         """
-        ator = Select.parse('SELECT nome as nome_ator FROM Ator a')[0]
-        ator( elenco=ForeignKey('Elenco'), idade=Between(45, 69) )
+        ForeignKey.references = {
+            'Ator_Elenco': 'elenco_id',
+            'Elenco_Filme': 'filme_id',
+        }
+        ator = Select.parse('''
+            SELECT nome as nome_ator FROM Ator a
+            WHERE a.idade >= 45 AND a.idade <= 69
+        ''')[0]
         elenco = Select.parse('SELECT papel FROM Elenco')[0]
-        elenco(filme=ForeignKey('Filme'), id=PrimaryKey)
         filme = Select.parse("""
             SELECT titulo, lancamento FROM Filme f ORDER BY lancamento DESC
             WHERE ( f.genero = 'Sci-Fi' OR f.premios LIKE '%Oscar%' ) GROUP BY diretoR
@@ -452,7 +468,6 @@ if __name__ == "__main__":
                  #                                                              |
                  #   `diretor` será excluído com o DELETE do teste -------------+
                  #
-        filme(id=PrimaryKey)
         return ator, elenco, filme
 
     Select.join_type = JoinType.LEFT
