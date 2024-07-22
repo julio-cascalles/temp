@@ -288,7 +288,7 @@ class Select(SQLObject):
                 )
             ] + self.values[FROM][1:]
         )
-        for key in (SELECT, WHERE, ORDER_BY):
+        for key in USUAL_KEYS:
             update_values(key, self.values.get(key, []))
 
     def __add__(self, other: SQLObject):
@@ -463,7 +463,7 @@ if __name__ == "__main__":
         elenco = Select.parse('SELECT papel FROM Elenco')[0]
         filme = Select.parse("""
             SELECT titulo, lancamento FROM Filme f ORDER BY lancamento DESC
-            WHERE ( f.genero = 'Sci-Fi' OR f.premios LIKE '%Oscar%' ) GROUP BY diretoR
+            WHERE ( f.genero = 'Sci-Fi' OR f.premios LIKE '%Oscar%' ) GROUP BY diretor
         """)[0]  #                                                              ^
                  #                                                              |
                  #   `diretor` será excluído com o DELETE do teste -------------+
