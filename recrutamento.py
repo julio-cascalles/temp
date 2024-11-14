@@ -24,12 +24,12 @@ def anuncio(vaga: Vaga, candidato: Candidato) -> str:
     )
 
 
-PYTHON, SQL, DEJANGO = [ Habilidade(nome, valor) for nome, valor in (
-    ('Python', 4500), ('SQL', 3700), ('Dejango', 1000)
+PYTHON, SQL, DJANGO = [ Habilidade(nome, valor) for nome, valor in (
+    ('Python', 4500), ('SQL', 3700), ('Django', 1000)
 ) ]
 
 if __name__ == '__main__':
     print('='*30, anuncio(
-        Vaga('Analista Pleno', [PYTHON, SQL, DEJANGO]),
+        Vaga('Dev. Back-end', [PYTHON, SQL, DJANGO]),
         Candidato([PYTHON, SQL])
     ), '-'*30)
