@@ -41,15 +41,15 @@ class Compra:
 
 REGRAS_BASICAS = {
     'desconto para idosos': (
-        lambda compra: 10 if compra.cliente.idade > 65 else 0 # <--- func_percentual
+        lambda compra: 10 if compra.cliente.idade > 65 else 0 
     ),'programa de fidelidade': (
-        lambda compra: 5 if compra.cliente.fidelidade else 0 # <---- func_percentual
+        lambda compra: 5 if compra.cliente.fidelidade else 0 
     ),'presente de aniversário': (
         lambda compra: 15  if compra.cliente.aniversário() else 0
     ),'promoção do produto': (
-        lambda compra: 20 if compra.produto.em_promoção else 0 # <-- func_percentual
+        lambda compra: 20 if compra.produto.em_promoção else 0 
     ),'desconto por quantidade': (
-        lambda compra: 7 if compra.quantidade > 5 else 0 # <-------- func_percentual
+        lambda compra: 7 if compra.quantidade > 5 else 0 
     ),}
 
 def calcula_desconto(compra: Compra, regras: dict=REGRAS_BASICAS) -> float:
@@ -67,6 +67,7 @@ def calcula_desconto(compra: Compra, regras: dict=REGRAS_BASICAS) -> float:
         print(f'Nenhum desconto para {compra.cliente.nome} :((')
     return total
 
+
 if __name__ == "__main__":
     seu_Jolêno = Cliente('Joleno Dos Bitus', datetime(1945, 8, 13))
     compra_do_seu_Jolêno = [
@@ -79,8 +80,8 @@ if __name__ == "__main__":
     ]
     compras_da_Paula = [
         Compra(produto=Produto('Queijo emental', valor=80.13),
-            quantidade=1, cliente=Cliente('Paula Tejano', # fidelidade=True,
-                nascimento=datetime(2000, 3, 3) # HOJE.month, HOJE.day)
+            quantidade=1, cliente=Cliente('Paula Tejano', fidelidade=True,
+                nascimento=datetime(2000, HOJE.month, HOJE.day) # ---- simula uma cliente fazendo aniversário hoje
         ))
     ]
     for compra in compra_do_seu_Jolêno + compras_da_Paula:
