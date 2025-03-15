@@ -4,7 +4,7 @@ class Solution:
         last = None
         while arr:
             item = arr.pop()
-            if item != last and item not in arr:
+            if item != last and (not arr or item != arr[-1]):
                 return item
             last = item
         return None
