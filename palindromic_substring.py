@@ -45,7 +45,16 @@ def main():
         # ----- (7)  --------------------------------
         ('Fique tranquilo: Anotaram a data da maratona. É amanhã.', 'anotaramadatadamaratona'),
         # ----- (8)  --------------------------------
-        ('Natanael'*1000, 'natan'),
+        ('Natanael'*1000, 'natan'), 
+        # +---+ 
+        #   |
+        #   +------>> String "suja" contendo um palíndromo:
+        #             A repetição de Natanael 1000 vezes
+        #             serve para dificultar a localização 
+        #             do palíndromo `NATAN`; 
+        #             E o fato dela ser muito grande é para
+        #             forçar um << TimeOut >> .
+         
     ]
     for i, (text, expected) in enumerate(CASES, start=1):
         text = normalize('NFKD', text).encode('ASCII', 'ignore').decode()
