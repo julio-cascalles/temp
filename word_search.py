@@ -5,63 +5,51 @@ https://leetcode.com/problems/word-search/
 
 
 class Solution:
-    def __init__(self):
-        self.map = {}
-
     def exist(self, board: list, word: str) -> bool:
-        if not self.map:
-            for y, row in enumerate(board):
-                for x, char in enumerate(row):
-                    self.map.setdefault(char, []).append((x, y))
-        return self.matches(word)
-
-    def matches(self, word: str) -> bool:
-        self.path = None
-        for i, char in enumerate(word):
-            found = self.map.get(char, [])
-            if not found:
+        # -------------------------------------------
+        def back_track(x: int, y: int, k: int) -> bool:
+            if len(word) == k:
+                return True
+            valid = all([
+                0 <= y < len(board),
+                0 <= x < len(board[0]),
+            ])
+            if not valid or board[y][x] != word[k]:
                 return False
-            if self.path:
-                self.update(found)
-            elif i > 0:
-                return False
-            else:
-                self.path = [[row] for row in found]
-        return len(self.path) > 0
-
-    def update(self, data: list) -> None:
-        result = []
-        while self.path:
-            row = self.path.pop(0)
-            x1, y1 = row[-1]
-            for x2, y2 in data:
-                closer = (abs(x2-x1), abs(y2-y1)) in [(0, 1), (1, 0)]
-                unique = (x2, y2) not in row
-                if closer and unique:
-                    result.append( row + [(x2, y2)] )
-        self.path = result
+            board[y][x] = ' '
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                if back_track(x + dx, y + dy, k + 1):
+                    return True
+            board[y][x] = word[k]
+            return False
+        # -------------------------------------------
+        for y in range(len(board)):
+            for x in range(len(board[y])):
+                if back_track(x, y, 0):
+                    return True
+        return False
 
 
 
 if __name__ == '__main__':
-    GRID = [
-        #012345
-        'DCEEEM', # 0
-        'ELADIA', # 1
-        'CERVOD', # 2
-        'KDIAPT', # 3
-        'AHLZUL', # 4
-    ]
     solution = Solution()
     CASES = [
         ('CEDILHA', True),
         ('APOIADO', False),
         ('AZUL', True),
         ('ARVORE', False),
+        ('LARVA', True),
     ]
     for i, (text, expected) in enumerate(CASES, start=1):
+        GRID = [
+            #0   1   2   3   4   5
+            ['D','C','E','E','E','M'], # 0
+            ['E','L','A','D','I','A'], # 1
+            ['C','E','R','V','O','D'], # 2
+            ['K','D','I','A','P','T'], # 3
+            ['A','H','L','Z','U','L'], # 4
+        ]
         print(f'Teste {i} ({text})...')
-        res = solution.exist(GRID, text)
-        assert res == expected
+        assert expected == solution.exist(GRID.copy(), text)
         print('\t...OK!')
     print('Passou em todos os testes'.center(50, '*'))
