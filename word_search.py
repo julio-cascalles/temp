@@ -50,6 +50,6 @@ if __name__ == '__main__':
             ['A','H','L','Z','U','L'], # 4
         ]
         print(f'Teste {i} ({text})...')
-        assert expected == solution.exist(GRID.copy(), text)
+        assert expected == solution.exist(GRID, text)
         print('\t...OK!')
     print('Passou em todos os testes'.center(50, '*'))
