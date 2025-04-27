@@ -1,3 +1,4 @@
+mcp
 duckdb
 sql_blocks
 faker

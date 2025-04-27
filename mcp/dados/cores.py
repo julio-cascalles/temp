@@ -1,6 +1,6 @@
 from enum import Enum
 
-class Cores(Enum):
+class Cor(Enum):
     AZUL = 'azul'
     PRETO = 'preto'
     BRANCO = 'branco'

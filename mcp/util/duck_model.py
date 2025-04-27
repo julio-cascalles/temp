@@ -2,7 +2,7 @@ from enum import Enum
 from datetime import datetime
 import duckdb
 import re
-from sql_blocks import Select, Where
+from sql_blocks import Select, Where, Field
 
 
 class FileFormat(Enum):
@@ -14,8 +14,8 @@ class DuckModel:
     objects = {}
     primary_key = 'id'
     file_format: FileFormat = FileFormat.PARQUET
-    to_display = set()
     debug: bool = True
+    max_records = 60
 
     @classmethod
     def get_next_id(cls, **args):
@@ -66,14 +66,12 @@ class DuckModel:
         if query:
             fields = [re.findall(r'\w+', f)[-1] for f in query.values['SELECT']]
         else:
-            fields = cls.schema()
+            fields = list( cls.to_display() or cls.schema().keys() )
             query = Select( cls.file_name() )
             query.add_fields(fields)
+        query = query.limit(cls.max_records)
         for key, value in args.items():
-            cls.to_display.add(key)
             Where.eq(value).add(key, query)
-        if not cls.to_display:
-            cls.to_display = {cls.primary_key}
         if cls.debug:
             print('▒'*50)
             print(query)
@@ -85,14 +83,18 @@ class DuckModel:
             cls(**data)
         return cls.objects.values()
     
-    def get_values(self, field_set: set=None):
-        for field, value in self.__dict__.items():
-            if field_set and field not in field_set:
+    @classmethod
+    def to_display(cls) -> list[str]:
+        return []
+
+    def get_values(self, restricted: list=None):
+        for field, content in self.__dict__.items():
+            if restricted and field not in restricted:
                 continue
-            if isinstance(value, Enum):
-                yield value.value
+            if isinstance(content, Enum):
+                yield content.value
             else:
-                yield value
+                yield content
 
     @classmethod
     def save(cls):
@@ -120,6 +122,5 @@ class DuckModel:
 
     def __str__(self) -> str:
         return ' - '.join(
-            str(val) for val in self.get_values(self.to_display)
+            str(val) for val in self.get_values(self.to_display())
         )
-

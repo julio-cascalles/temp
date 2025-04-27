@@ -4,7 +4,7 @@ from faker import Faker
 from dados.combustivel import Combustivel
 from dados.status import Status
 from dados.marca import Marca, MODELOS
-from dados.cores import Cores
+from dados.cores import Cor
 
 
 HOJE = datetime.today()
@@ -20,7 +20,7 @@ class Veiculo(DuckModel):
             'placa': str,
             'marca': Marca,
             'modelo': str,
-            'cor': Cores,
+            'cor': Cor,
             'ano': int,
             'km': float,
             'compra': datetime,
@@ -50,7 +50,7 @@ class Veiculo(DuckModel):
                 marca=marca,
                 modelo=fake.random_element(MODELOS[marca]),
                 cor=fake.random_element(
-                    cor for cor in Cores
+                    cor for cor in Cor
                 ),
                 ano=ano_fabricacao,
                 km=fake.random_number(4) * idade,
@@ -69,9 +69,6 @@ class Veiculo(DuckModel):
             count -= 1
         cls.save()
 
-    def __str__(self) -> str:
-        CAMPOS_OBRIGATORIOS = {
-            'placa', 'marca', 'modelo', 'cor', 'ano'
-        }
-        self.to_display.update(CAMPOS_OBRIGATORIOS)
-        return super().__str__()
+    @classmethod
+    def to_display(cls) -> list[str]:
+        return ['placa', 'marca', 'modelo', 'cor', 'ano']
