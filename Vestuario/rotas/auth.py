@@ -22,7 +22,7 @@ def cria_novo_token(user: User) -> dict:
     token = jwt.encode(dados, CHAVE_ACESSO, algorithm=ALGORITMO_PADRAO)
     return {"access_token": token, "token_type": "bearer"} 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+def usuario_da_sessao(token: str = Depends(oauth2_scheme)):
     payload = jwt.decode(token, CHAVE_ACESSO, algorithms=[ALGORITMO_PADRAO])
     user = User.find_first(email=payload.get("sub"))
     if not user:
@@ -33,8 +33,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         )
     return user
 
-@router.post("/cadastrar", response_model=Token)
-async def cadastrar(dados: UserData):
+@router.post("/registra_usuario", response_model=Token)
+def registra_usuario(dados: UserData):
     if User.find_first(email=dados.email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -49,7 +49,7 @@ async def cadastrar(dados: UserData):
     return cria_novo_token(user)
 
 @router.post("/login", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = User.find_first(email=form_data.username)
     if not user or not user.senha_valida(form_data.password):
         raise HTTPException(

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from modelos.campanha import Campanha, TipoCampanha
+from modelos.campanha import Campanha, Lancamento, Liquidacao, Prospeccao
 from modelos.util.categorias import Categoria
 from modelos.util.midias import Midia
 from modelos.cliente import Cliente
@@ -7,26 +7,41 @@ from modelos.cliente import Cliente
 
 router = APIRouter()
 
-@router.post('/campanha')
-def grava_campanha(campanha: Campanha):
-    duplicada = Campanha.find(nome=campanha.nome)
-    if duplicada:
+
+def verifica_duplicada(campanha: Campanha):
+    if Campanha.find(nome=campanha.nome):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Já existe uma campanha com este nome."
         )
+
+# ------- Grava por tipo de Campanha: ------------
+@router.post('/campanha/lancamento')
+def lancamento(campanha: Lancamento):
+    verifica_duplicada(campanha)
     campanha.save()
+
+@router.post('/campanha/liquidacao')
+def liquidacao(campanha: Liquidacao):
+    verifica_duplicada(campanha)
+    campanha.save()
+
+@router.post('/campanha/prospeccao')
+def prospeccao(campanha: Prospeccao):
+    verifica_duplicada(campanha)
+    campanha.save()
+# -------------------------------------------------
 
 @router.get('/campanhas')
 def consulta_campanhas(
-    tipo: TipoCampanha=None,
+    nome: str='',
     categorias: str='',
     midias: str=''
 ):
     query = {}
     # ---- Monta a query: ----------------------
-    if tipo:
-        query['tipo'] = tipo
+    if nome:
+        query['nome'] = {'$regex': f'.*{nome}.*'}
     if categorias:
         query['categorias'] = {'$in': Categoria.combo(categorias)}
     if midias:
@@ -37,9 +52,8 @@ def consulta_campanhas(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="""
             Especifique um critério da pesquisa:
-            * tipo = Traz as campanhas do tipo procurado
-                > para mais detalhes, veja `/tipos_campanha`
-            * categorias = Campanhas que promovem certas cat. de produtos
+            * nome = Busca campanhas que contém o nome procurado;
+            * categorias = Campanhas relacionadas a categorias de prod.
                 > (para maiores informações use `/categorias`)
             * midias = Em quais mídias as campanhas serão divulgadas
                 > (para maiores informações use `/midias`)
@@ -47,21 +61,17 @@ def consulta_campanhas(
         )
     return Campanha.find(**query)
 
-@router.get('/publico_alvo/{nome_campanha}')
-def publico_alvo(nome_campanha: str):
-    campanha = Campanha.find_first(nome=nome_campanha)
-    if not campanha:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='Nenhuma campanha encontrada nesta busca.'
-        )
-    encontrados = Cliente.find(
-        preferencias=campanha.categorias,
-        redes_sociais=campanha.midias
-    )
-    if not encontrados:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='Nenhum cliente é compatível com esta campanha.'
-        )
-    return encontrados
+
+@router.delete('/encerrar_campanha/{nome_campanha}')
+def encerrar_campanha(nome_campanha: str):
+    excluidas = {}
+    for campanha in Campanha.find(nome=nome_campanha):
+        cls = campanha.__class__
+        excluidas[cls.__name__] = cls.delete(
+            nome=nome_campanha
+        ).deleted_count
+    if excluidas:
+        return {
+            'campanhas_excluidas': excluidas,
+        }
+    return 'Nenhuma campanha excluída.'

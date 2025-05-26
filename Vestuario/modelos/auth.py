@@ -21,13 +21,10 @@ class Token(BaseModel):
     token_type: str
 
 
-class UserData(BaseModel):
+class Usuario(BaseModel, MongoTable):
     email: str
     nome: str
     senha: str
-
-
-class User(UserData, MongoTable):
 
     @staticmethod
     def encripta_senha(nova_senha: str) -> str:
