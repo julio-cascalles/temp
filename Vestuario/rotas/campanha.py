@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from modelos.campanha import Campanha, TipoCampanha
-from modelos.util.subcategorias import SubCategoria
+from modelos.util.categorias import Categoria
 from modelos.util.midias import Midia
 from modelos.cliente import Cliente
 
@@ -20,17 +20,17 @@ def grava_campanha(campanha: Campanha):
 @router.get('/campanhas')
 def consulta_campanhas(
     tipo: TipoCampanha=None,
-    categorias: list[SubCategoria]=None,
-    midias: list[Midia]=None
+    categorias: str='',
+    midias: str=''
 ):
     query = {}
     # ---- Monta a query: ----------------------
     if tipo:
         query['tipo'] = tipo
     if categorias:
-        query['categorias'] = {'$in': categorias}
+        query['categorias'] = {'$in': Categoria.combo(categorias)}
     if midias:
-        query['midias'] = {'$in': midias}
+        query['midias'] = {'$in': Midia.combo(midias)}
     # ------------------------------------------
     if not query:
         raise HTTPException(

@@ -1,11 +1,11 @@
 from pydantic import BaseModel, field_validator
 from modelos.util.mongo_table import MongoTable
-from modelos.util.subcategorias import SubCategoria
+from modelos.util.categorias import Categoria
 
 
 class Produto(BaseModel, MongoTable):
     nome: str
-    categoria: list[SubCategoria] | str
+    categoria: list[Categoria] | str
     estoque: int
     valor: float
 
@@ -29,5 +29,5 @@ class Produto(BaseModel, MongoTable):
     @field_validator('categoria')
     def valida_categorias(lista_catego: list | str):
         if isinstance(lista_catego, str):
-            lista_catego = list( SubCategoria.combine(lista_catego) )
+            lista_catego = list( Categoria.combo(lista_catego) )
         return lista_catego

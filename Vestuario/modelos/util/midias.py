@@ -1,11 +1,10 @@
-from enum import Enum
+from modelos.util.sinalizador import Sinalizador
 
 
-class Midia(Enum):
-    WHATSAPP = "Whatsapp"
-    # YOUTUBE = "Youtube"
-    FACEBOOK = "Facebook"
-    INSTAGRAM = "Instagram"
-    TIKTOK = "TikTok"
-    X_TWITTER = "X_Twitter"
-    LINKEDIN = "Linkedin"
+class Midia(Sinalizador):
+    WHATSAPP    =   1
+    FACEBOOK    =   2
+    INSTAGRAM   =   4
+    TIKTOK      =   8
+    X_TWITTER   =  16
+    LINKEDIN    =  32

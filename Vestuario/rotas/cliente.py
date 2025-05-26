@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from modelos.cliente import Cliente
+from modelos.util.categorias import Categoria
+from modelos.util.midias import Midia
 
 
 router = APIRouter()
@@ -17,17 +19,17 @@ def grava_cliente(cliente: Cliente):
 @router.get('/clientes')
 def consulta_clientes(
     email: str='',
-    preferencias: list=None,
-    redes_sociais: list=None
+    preferencias: str='',
+    redes_sociais: str=''
 ):
     query = {}
     # --- Monta a query: ------------------------------
     if email:
         query['email'] = {'$regex': f'.*{email}.*'}
     if preferencias:
-        query['preferencias'] = {'$in': preferencias}
+        query['preferencias'] = {'$in': Categoria.combo(preferencias)}
     if redes_sociais:
-        query['redes_sociais'] = {'$in': redes_sociais}
+        query['redes_sociais'] = {'$in': Midia.combo(redes_sociais)}
     # --------------------------------------------------
     if not query:
         raise HTTPException(
@@ -41,3 +43,7 @@ def consulta_clientes(
             """
         )
     return Cliente.find(**query)
+
+@router.get('/categorias')
+def redes_sociais():
+    return [c.name for c in Midia]

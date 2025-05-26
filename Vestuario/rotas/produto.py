@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from modelos.produto import Produto
-from modelos.util.subcategorias import SubCategoria
+from modelos.util.categorias import Categoria
 
 
 router = APIRouter()
@@ -17,10 +17,10 @@ def grava_produto(produto: Produto):
 
 @router.get('/categorias')
 def lista_categorias():
-    return [c.name for c in SubCategoria]
+    return [c.name for c in Categoria]
 
 @router.get('/produtos/{categorias}')
-def consulta_produtos(categorias: list):
+def consulta_produtos(categorias):
     encontrados = Produto.find(
         categoria={'$in': categorias},
         estoque={'$gt': 1}
