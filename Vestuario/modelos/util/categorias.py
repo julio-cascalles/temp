@@ -14,6 +14,13 @@ class Categoria(Sinalizador):
     INTIMA      =   512
     FRIO        =  1024
 
+    @classmethod
+    def item_enum(cls, name: str):
+        return {
+            'MASCULINO': cls.MASCULINA,
+            'FEMININO': cls.FEMININA,
+        }.get(name) or super().item_enum(name)
+
 
 """
 Exemplos:

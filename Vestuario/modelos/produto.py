@@ -4,22 +4,30 @@ from modelos.util.mongo_table import MongoTable
 from modelos.util.categorias import Categoria
 
 
-class Cupom(BaseModel, MongoTable):
+class Cupom(BaseModel):
     desconto: float
-    valido_ate: datetime
+    valido_ate: str  # -- Data em formato '2024-12-25'
+
+    @staticmethod
+    def dentro_prazo(dt_exp: str) -> bool:
+        dt_exp = datetime.strptime(dt_exp, '%Y-%m-%d')
+        return datetime.today() <= dt_exp
+
+    @field_validator('valido_ate')
+    def valida_validade(data_limite: str):
+        if not Cupom.dentro_prazo(data_limite):
+            ValueError('A data deve ser até hoje.')
+        return data_limite
+
+    def expirou(self) -> bool:
+        return not self.dentro_prazo(self.valido_ate)
 
 
 class Produto(BaseModel, MongoTable):
-    """
-    Apesar de chamar `Produto`, esta entidade
-    está relacionada à LINHA de produtos, portanto
-    NÃO tem campos como tamanho, cor...que seriam
-    atributos de itens individuais.
-    """
     nome: str
     categoria: list[Categoria] | str = ''
     valor: float
-    cupom: Cupom = None
+    cupom: dict | None = None
 
     @field_validator('valor')
     def valida_valor(novo_valor: int) -> int:
@@ -34,15 +42,3 @@ class Produto(BaseModel, MongoTable):
         if isinstance(lista_catego, str):
             lista_catego = list( Categoria.combo(lista_catego) )
         return lista_catego
-
-    @property
-    def total(self) -> float:
-        preco_normal = (
-            not self.cupom
-            or
-            self.cupom.valido_ate < datetime.today()
-        )
-        if preco_normal:
-            self.cupom = None
-            return self.valor
-        return self.valor * (1 - self.cupom.desconto)

@@ -8,6 +8,11 @@ router = APIRouter()
 
 @router.post('/cliente')
 def grava_cliente(cliente: Cliente):
+    """
+    Grava um cliente avulso.
+    Você também pode gravar clientes através
+    de campanhas de *Prospecção*: `/campanha/prospeccao`
+    """
     duplicado = Cliente.find_first(email=cliente.email)
     if duplicado:
         raise HTTPException(
@@ -18,14 +23,18 @@ def grava_cliente(cliente: Cliente):
 
 @router.get('/clientes')
 def consulta_clientes(
-    email: str='',
+    nome: str='',
     preferencias: str='',
     redes_sociais: str=''
 ):
+    """
+    Consulta clientes por nome parecido, preferências
+    de produtos ou quais redes sociais ele possui.
+    """
     query = {}
     # --- Monta a query: ------------------------------
-    if email:
-        query['email'] = {'$regex': f'.*{email}.*'}
+    if nome:
+        query['nome'] = {'$regex': f'.*{nome}.*'}
     if preferencias:
         query['preferencias'] = {'$in': Categoria.combo(preferencias)}
     if redes_sociais:
@@ -44,6 +53,11 @@ def consulta_clientes(
         )
     return Cliente.find(**query)
 
-@router.get('/categorias')
+@router.get('/midias')
+@router.get('/redes_sociais')
 def redes_sociais():
+    """
+    Lista todas as mídias (ou redes sociais)
+    reconhecidas por este sistema.
+    """
     return [c.name for c in Midia]

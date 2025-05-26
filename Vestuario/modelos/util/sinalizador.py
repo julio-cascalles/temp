@@ -2,9 +2,14 @@ from enum import IntFlag, auto
 import re
 
 class Sinalizador(IntFlag):
+
     @classmethod
-    def combo(cls, expr: str) -> set:
+    def item_enum(cls, name: str) -> 'IntFlag':
+        return cls[name.strip()]
+
+    @classmethod
+    def combo(cls, expr: str) -> list:
         result = set()
         for name in re.findall( r'\w+', expr.upper() ):
-            result.add( cls[name.strip()] )
-        return result
+            result.add( cls.item_enum(name) )
+        return list(result)

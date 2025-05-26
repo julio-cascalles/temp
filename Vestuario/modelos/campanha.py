@@ -27,54 +27,68 @@ class Campanha(BaseModel):
     @classmethod
     def find(cls, **args) -> list:
         result = []
+        print('###############################################################')
         for sub in cls.__subclasses__():
+            print(f'\t\t{sub.__name__}.find({args})')
             result += sub.find(**args)
+        print('###############################################################')
         return result
 
 
 class Lancamento(Campanha, MongoTable):
-    produtos: list[Produto]
+    produtos: list[Produto| dict]
 
     def save(self):
-        """
-        Faz o lançamento dos novos produtos,
-        deixando-os disponíveis para consumo:
-        """
+        gravados = []
         for produto in self.produtos:
             if Produto.find(nome=produto.nome):
                 continue # --- ignora duplicado
             if not produto.categoria:
                 produto.categoria = self.categorias.copy()
+            gravados.append(produto.model_dump())
             produto.save()
+        self.produtos = gravados
+        if not gravados:
+            return False
         super().save()
+        return True
 
 
 class Liquidacao(Campanha, MongoTable):
     desconto: float
 
+    @field_validator('desconto')
+    def valida_desconto(novo_desconto: float):
+        if 0.7 > novo_desconto >= 0.01:
+            return novo_desconto
+        raise ValueError("""
+            O desconto deve estar entre
+             0.01 (1%)  e  0.7 (70%)
+        """)
+
     def save(self):
-        """
-        Aplica cupom de desconto em
-        todos os produtos da campanha
-        """
+        encontrados = Produto.find(
+            categoria={'$in': self.categorias}
+        )
+        if not encontrados:
+            return False
+        data_limite = datetime.today() + timedelta(days=15)
         cupom = Cupom(
             desconto=self.desconto,
-            valido_ate=datetime.today() + timedelta(days=15)
-        )
-        produto: Produto
-        for produto in self.produtos:
+            valido_ate=data_limite.strftime('%Y-%m-%d')
+        ).model_dump()
+        for produto in encontrados:
             produto.cupom = cupom
             produto.save()
         super().save()
+        return True
 
 
 class Prospeccao(Campanha, MongoTable):
-    clientes: list[Cliente]
+    clientes: list[Cliente | dict]
 
     def save(self):
-        """
-        Converte `leads` em clientes
-        """
+        gravados = []
         for cliente in self.clientes:
             if Cliente.find(nome=cliente.nome):
                 continue # -- ignora os duplicados
@@ -82,5 +96,10 @@ class Prospeccao(Campanha, MongoTable):
                 cliente.redes_sociais = self.midias.copy()
             if not cliente.preferencias:
                 cliente.preferencias = self.categorias.copy()
+            gravados.append(cliente.model_dump())
             cliente.save()
+        self.clientes = gravados
+        if not gravados:
+            return False
         super().save()
+        return True

@@ -18,16 +18,36 @@ def verifica_duplicada(campanha: Campanha):
 # ------- Grava por tipo de Campanha: ------------
 @router.post('/campanha/lancamento')
 def lancamento(campanha: Lancamento):
+    """
+    Faz o lançamento dos novos produtos,
+    deixando-os disponíveis para consumo:
+    """
     verifica_duplicada(campanha)
-    campanha.save()
+    if not campanha.save():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nenhum produto pode ser lançado.", 
+        )
+    return 'Campanha criada com sucesso!'
 
 @router.post('/campanha/liquidacao')
 def liquidacao(campanha: Liquidacao):
+    """
+    Aplica cupom de desconto em
+    todos os produtos da campanha
+    """
     verifica_duplicada(campanha)
-    campanha.save()
+    if not campanha.save():
+        raise HTTPException(
+            detail='Nenhum produto encontrado para receber o cupom.',
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
 
 @router.post('/campanha/prospeccao')
 def prospeccao(campanha: Prospeccao):
+    """
+    Converte `leads` em clientes
+    """
     verifica_duplicada(campanha)
     campanha.save()
 # -------------------------------------------------
@@ -64,6 +84,10 @@ def consulta_campanhas(
 
 @router.delete('/encerrar_campanha/{nome_campanha}')
 def encerrar_campanha(nome_campanha: str):
+    """
+    Encerra qualquer tipo de campanha
+    que tenha o nome igual ao procurado
+    """
     excluidas = {}
     for campanha in Campanha.find(nome=nome_campanha):
         cls = campanha.__class__

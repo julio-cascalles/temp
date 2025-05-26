@@ -3,8 +3,8 @@ from jose import jwt
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from modelos.auth import (
-    ALGORITMO_PADRAO, DURACAO_TOKEN,
-    CHAVE_ACESSO, User, UserData, Token
+    ALGORITMO_PADRAO, CHAVE_ACESSO,
+    DURACAO_TOKEN, Usuario, Token
 )
 
 
@@ -13,7 +13,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 DEFAULT_HEADER = {"WWW-Authenticate": "Bearer"}
 
 
-def cria_novo_token(user: User) -> dict:
+def cria_novo_token(user: Usuario) -> dict:
     validade=timedelta(minutes=DURACAO_TOKEN)
     dados = {
         "sub": user.email,
@@ -24,7 +24,7 @@ def cria_novo_token(user: User) -> dict:
 
 def usuario_da_sessao(token: str = Depends(oauth2_scheme)):
     payload = jwt.decode(token, CHAVE_ACESSO, algorithms=[ALGORITMO_PADRAO])
-    user = User.find_first(email=payload.get("sub"))
+    user = Usuario.find_first(email=payload.get("sub"))
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -34,23 +34,23 @@ def usuario_da_sessao(token: str = Depends(oauth2_scheme)):
     return user
 
 @router.post("/registra_usuario", response_model=Token)
-def registra_usuario(dados: UserData):
-    if User.find_first(email=dados.email):
+def registra_usuario(dados: Usuario):
+    if Usuario.find_first(email=dados.email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Este email já está em uso!"
         )
-    user = User(
+    user = Usuario(
         email=dados.email,
         nome=dados.nome,
-        senha=User.encripta_senha(dados.senha)
+        senha=Usuario.encripta_senha(dados.senha)
     )
     user.save()
     return cria_novo_token(user)
 
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = User.find_first(email=form_data.username)
+    user = Usuario.find_first(email=form_data.username)
     if not user or not user.senha_valida(form_data.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
