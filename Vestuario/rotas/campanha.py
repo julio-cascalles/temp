@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 def verifica_duplicada(campanha: Campanha):
-    if Campanha.find_all(nome=campanha.nome):
+    if Campanha.find(nome=campanha.nome):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Já existe uma campanha com este nome."
@@ -28,7 +28,7 @@ def lancamento(campanha: Lancamento):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Nenhum produto pode ser lançado.", 
         )
-    return 'Campanha criada com sucesso!'
+    return 'Campanha de `Lançamento` criada com sucesso!'
 
 @router.post('/campanha/liquidacao')
 def liquidacao(campanha: Liquidacao):
@@ -42,6 +42,7 @@ def liquidacao(campanha: Liquidacao):
             detail='Nenhum produto encontrado para receber o cupom.',
             status_code=status.HTTP_400_BAD_REQUEST
         )
+    return 'Campanha de `Liquidação` criada com sucesso!'
 
 @router.post('/campanha/prospeccao')
 def prospeccao(campanha: Prospeccao):
@@ -49,7 +50,12 @@ def prospeccao(campanha: Prospeccao):
     Converte `leads` em clientes
     """
     verifica_duplicada(campanha)
-    campanha.save()
+    if not campanha.save():
+        raise HTTPException(
+            detail='Não há como prospectar clientes que já existem.',
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+    return 'Campanha de `Prospecção` criada com sucesso!'
 # -------------------------------------------------
 
 @router.get('/campanhas')
@@ -79,7 +85,7 @@ def consulta_campanhas(
                 > (para maiores informações use `/midias`)
             """
         )
-    return Campanha.find_all(**query)
+    return Campanha.find(**query)
 
 
 @router.delete('/encerrar_campanha/{nome_campanha}')
@@ -89,7 +95,7 @@ def encerrar_campanha(nome_campanha: str):
     que tenha o nome igual ao procurado
     """
     excluidas = {}
-    for campanha in Campanha.find_all(nome=nome_campanha):
+    for campanha in Campanha.find(nome=nome_campanha):
         cls = campanha.__class__
         excluidas[cls.__name__] = cls.delete(
             nome=nome_campanha

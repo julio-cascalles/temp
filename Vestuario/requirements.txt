@@ -6,3 +6,4 @@ dotenv
 python-jose
 pytest
 passlib
+httpx

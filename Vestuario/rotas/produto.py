@@ -19,6 +19,7 @@ def grava_produto(produto: Produto):
             detail="Já existe um produto com este nome."
         )
     produto.save()
+    return 'Produto gravado com sucesso'
 
 @router.get('/categorias')
 def lista_categorias():

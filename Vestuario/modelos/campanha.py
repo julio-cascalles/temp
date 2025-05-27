@@ -7,10 +7,11 @@ from modelos.produto import Produto, Cupom
 from modelos.cliente import Cliente
 
 
-class Campanha(BaseModel):
+class Campanha(BaseModel, MongoTable):
     nome: str
     categorias: list[Categoria] | str = ''
     midias: list[Midia] | str = ''
+    tipo: str=''
 
     @field_validator('categorias')
     def valida_categorias(lista_catego: list | str):
@@ -25,15 +26,13 @@ class Campanha(BaseModel):
         return redes
     
     @classmethod
-    def find_all(cls, **args) -> list:
-        result = []
-        for sub in cls.__subclasses__():
-            result += sub.find(**args)
-        return result
+    def table_name(cls) -> str:
+        cls.class_type_field = 'tipo'
+        return 'Campanha'
 
 
-class Lancamento(Campanha, MongoTable):
-    produtos: list[Produto| dict]
+class Lancamento(Campanha):
+    produtos: list[Produto]
 
     def save(self):
         gravados = []
@@ -51,7 +50,7 @@ class Lancamento(Campanha, MongoTable):
         return True
 
 
-class Liquidacao(Campanha, MongoTable):
+class Liquidacao(Campanha):
     desconto: float
 
     @field_validator('desconto')
@@ -81,8 +80,8 @@ class Liquidacao(Campanha, MongoTable):
         return True
 
 
-class Prospeccao(Campanha, MongoTable):
-    clientes: list[Cliente | dict]
+class Prospeccao(Campanha):
+    clientes: list[Cliente]
 
     def save(self):
         gravados = []

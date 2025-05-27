@@ -13,13 +13,14 @@ def grava_cliente(cliente: Cliente):
     Você também pode gravar clientes através
     de campanhas de *Prospecção*: `/campanha/prospeccao`
     """
-    duplicado = Cliente.find_first(email=cliente.email)
+    duplicado = Cliente.find(email=cliente.email)
     if duplicado:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Este email já está em uso!"
         )
     cliente.save()
+    return 'Cliente gravado com sucesso.'
 
 @router.get('/clientes')
 def consulta_clientes(

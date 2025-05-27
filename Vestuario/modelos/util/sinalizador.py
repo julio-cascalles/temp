@@ -11,5 +11,8 @@ class Sinalizador(IntFlag):
     def combo(cls, expr: str) -> list:
         result = set()
         for name in re.findall( r'\w+', expr.upper() ):
-            result.add( cls.item_enum(name) )
+            try:
+                result.add( cls.item_enum(name) )
+            except:
+                continue
         return list(result)

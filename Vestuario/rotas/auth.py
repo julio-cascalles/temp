@@ -24,18 +24,18 @@ def cria_novo_token(user: Usuario) -> dict:
 
 def usuario_da_sessao(token: str = Depends(oauth2_scheme)):
     payload = jwt.decode(token, CHAVE_ACESSO, algorithms=[ALGORITMO_PADRAO])
-    user = Usuario.find_first(email=payload.get("sub"))
+    user = Usuario.find(email=payload.get("sub"))
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Falha ao validar as credenciais.",
             headers=DEFAULT_HEADER,
         )
-    return user
+    return user[0]
 
 @router.post("/registra_usuario", response_model=Token)
 def registra_usuario(dados: Usuario):
-    if Usuario.find_first(email=dados.email):
+    if Usuario.find(email=dados.email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Este email já está em uso!"
@@ -50,7 +50,7 @@ def registra_usuario(dados: Usuario):
 
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = Usuario.find_first(email=form_data.username)
+    user = Usuario.find(email=form_data.username)
     if not user or not user.senha_valida(form_data.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
