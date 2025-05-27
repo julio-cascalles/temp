@@ -25,13 +25,10 @@ class Campanha(BaseModel):
         return redes
     
     @classmethod
-    def find(cls, **args) -> list:
+    def find_all(cls, **args) -> list:
         result = []
-        print('###############################################################')
         for sub in cls.__subclasses__():
-            print(f'\t\t{sub.__name__}.find({args})')
             result += sub.find(**args)
-        print('###############################################################')
         return result
 
 

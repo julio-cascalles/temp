@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 def verifica_duplicada(campanha: Campanha):
-    if Campanha.find(nome=campanha.nome):
+    if Campanha.find_all(nome=campanha.nome):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Já existe uma campanha com este nome."
@@ -79,7 +79,7 @@ def consulta_campanhas(
                 > (para maiores informações use `/midias`)
             """
         )
-    return Campanha.find(**query)
+    return Campanha.find_all(**query)
 
 
 @router.delete('/encerrar_campanha/{nome_campanha}')
@@ -89,7 +89,7 @@ def encerrar_campanha(nome_campanha: str):
     que tenha o nome igual ao procurado
     """
     excluidas = {}
-    for campanha in Campanha.find(nome=nome_campanha):
+    for campanha in Campanha.find_all(nome=nome_campanha):
         cls = campanha.__class__
         excluidas[cls.__name__] = cls.delete(
             nome=nome_campanha
