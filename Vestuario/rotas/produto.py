@@ -31,22 +31,21 @@ def lista_categorias():
 @router.get('/produtos/{categorias}')
 def consulta_produtos(categorias):
     """
-    Pesquise várias categorias em que os produtos podem estar.
-    Você pode usar vírgula, traço ou qualquer sinal para separar
-    as categorias da busca. Exemplo:
-        `/produtos/ROUPA+FEMININA+PRAIA`
-            * Biquini
-            * Saída de banho
-            * Maiô
-        > Obs.: Não use os caracteres reservados de URL
-                ("/", "&", ":", "%", ".", "?" ...)
+    Traz os produtos que mais tem as categorias procuradas.
+    Exemplo: `/produtos/ROUPA+FEMININA+PRAIA`
     """
+    busca = Categoria.combo(categorias)
+    def similaridade(produto: Produto) -> int:
+        s1 = set(produto.categoria)
+        s2 = set(busca)
+        return len( s1.intersection(s2) )
     encontrados = Produto.find(
-        categoria={'$in': Categoria.combo(categorias)}
+        categoria={'$in': busca}
     )
     if not encontrados:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Nenhum produto encontrado nesta busca.'
         )
+    encontrados.sort(key=lambda p: similaridade(p), reverse=True)
     return encontrados

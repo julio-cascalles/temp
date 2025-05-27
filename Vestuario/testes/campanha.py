@@ -1,8 +1,9 @@
 from fastapi.testclient import TestClient
 from urllib.parse import urlencode
-from testes.dados import MOCK_LANCAMENTO, MOCK_PROSPECCAO
+from testes.dados import MOCK_LANCAMENTO, MOCK_LIQUIDACAO, MOCK_PROSPECCAO
 from modelos.produto import Produto
 from modelos.cliente import Cliente
+from modelos.util.categorias import Categoria
 
 
 def lancamento(client: TestClient) -> bool:
@@ -50,4 +51,29 @@ def prospeccao(client: TestClient) -> bool:
         if item['email'] != cliente.email:
             return False
     # ------------------------------------------------------
+    return True
+
+def liquidacao(client: TestClient) -> bool:
+    res = client.post('/campanha/liquidacao', json=MOCK_LIQUIDACAO)
+    if res.status_code != 200:
+        return False
+    # --- Consulta se a campanha foi realmente gravada: ----
+    busca = urlencode( dict(nome=MOCK_LIQUIDACAO['nome']) )
+    res = client.get(f'/campanhas?{busca}')
+    if res.status_code != 200:
+        return False
+    # --- Verfica se os dados da campanha estão corretos: ----
+    desconto = res.json()[0]['desconto']
+    if MOCK_LIQUIDACAO['desconto'] != desconto:
+        return False
+    encontrado = Produto.find(
+        categoria={'$in': Categoria.combo(MOCK_LIQUIDACAO['categorias'])}
+    )
+    if not encontrado:
+        return False
+    produto: Produto
+    for produto in encontrado:
+        if not produto.cupom or produto.cupom['desconto'] !=  desconto:
+            return False
+    # -----------------------------------------------------------------
     return True
