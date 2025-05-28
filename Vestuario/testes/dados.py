@@ -27,7 +27,7 @@ MOCK_LANCAMENTO = {
 }
 
 MOCK_PROSPECCAO = {
-  "nome": "Revendas IA Meta & Grok",
+  "nome": "Revendas Meta & Grok 2026",
   "categorias": "fitness acessorio frio",
   "midias": "x_twitter,whatsapp,linkedin",
   "clientes": [

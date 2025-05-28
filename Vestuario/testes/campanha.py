@@ -77,3 +77,13 @@ def liquidacao(client: TestClient) -> bool:
             return False
     # -----------------------------------------------------------------
     return True
+
+def encerrar_campanha(client: TestClient) -> bool:
+    busca = '2026' # <-- MOCK_LANCAMENTO & MOCK_PROSPECCAO
+    res = client.delete(f'/encerrar_campanha/{busca}')
+    if res.status_code != 200:
+        return False
+    res = client.get(f'/campanhas?{busca}')
+    # -- Ao contrário de antes, agora TEM que dar erro ----
+    #    (...ou seja, não pode encontrar as campanhas excluídas)
+    return res.status_code != 200

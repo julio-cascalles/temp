@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 from rotas.util.app import create_app
 from modelos.util.mongo_table import MongoTable, TEST_DATABASE
 # from testes.auth import cadastra_usuario_sucesso, falha_cadastro_dupl
-from testes.campanha import lancamento, prospeccao, liquidacao
+from testes.campanha import lancamento, prospeccao, liquidacao, encerrar_campanha
 from testes.cliente import grava_cliente
 from testes.produto import grava_produto
 
@@ -33,3 +33,7 @@ def test_cliente():
 
 def test_produto():
     assert grava_produto(client)
+
+def test_encerrar_campanha():
+    assert encerrar_campanha(client)
+

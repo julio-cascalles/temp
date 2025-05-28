@@ -95,10 +95,11 @@ def encerrar_campanha(nome_campanha: str):
     que tenha o nome igual ao procurado
     """
     excluidas = {}
-    for campanha in Campanha.find(nome=nome_campanha):
+    busca={'$regex': f'.*{nome_campanha}.*'}
+    for campanha in Campanha.find(nome=busca):
         cls = campanha.__class__
         excluidas[cls.__name__] = cls.delete(
-            nome=nome_campanha
+            nome=campanha.nome
         ).deleted_count
     if excluidas:
         return {
