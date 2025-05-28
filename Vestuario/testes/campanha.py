@@ -84,6 +84,6 @@ def encerrar_campanha(client: TestClient) -> bool:
     if res.status_code != 200:
         return False
     res = client.get(f'/campanhas?{busca}')
-    # -- Ao contrário de antes, agora TEM que dar erro ----
-    #    (...ou seja, não pode encontrar as campanhas excluídas)
-    return res.status_code != 200
+    # ---- Não pode encontrar as campanhas excluídas -----
+    return res.status_code == 400
+
