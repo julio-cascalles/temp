@@ -50,8 +50,15 @@ def registra_usuario(dados: Usuario):
 
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = Usuario.find(email=form_data.username)
-    if not user or not user.senha_valida(form_data.password):
+    # --- Verifica se o email existe e a senha confere: ---
+    encontrado = Usuario.find(email=form_data.username)
+    if not encontrado:
+        email_invalido = True
+    else:
+        user = encontrado[0]
+        email_invalido = not user.senha_valida(form_data.password)        
+    # -----------------------------------------------------
+    if email_invalido:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email ou senha inválido(a).",

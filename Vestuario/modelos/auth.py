@@ -31,8 +31,5 @@ class Usuario(BaseModel, MongoTable):
         # return cypt_ctx.encrypt(nova_senha)
         return cypt_ctx.hash(nova_senha)
 
-    def senha_valida(self, senha: str) -> bool:
-        if not cypt_ctx.verify(senha):
-            return False
-        return self.senha == senha
-
+    def senha_valida(self, senha_digitada: str) -> bool:
+        return cypt_ctx.verify(senha_digitada, self.senha)

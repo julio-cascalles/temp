@@ -62,3 +62,9 @@ MOCK_LIQUIDACAO = {
   "midias": "tiktok linkedin instagram",
   "desconto": 0.15
 }
+
+MOCK_AUTH = {
+  "email": "ivokovi-pallindromo@juniper.xom",
+  "nome": "Ivokovi Pallindromo",
+  "senha": "z4oqR1/Ad*K"
+}
