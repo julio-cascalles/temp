@@ -21,6 +21,11 @@ class Token(BaseModel):
     token_type: str
 
 
+class Login(BaseModel):
+    username: str
+    password: str
+
+
 class Usuario(BaseModel, MongoTable):
     email: str
     nome: str

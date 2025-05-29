@@ -2,12 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from modelos.cliente import Cliente
 from modelos.util.categorias import Categoria
 from modelos.util.midias import Midia
+from modelos.auth import Usuario
+from rotas.auth import usuario_da_sessao
 
 
 router = APIRouter()
 
 @router.post('/cliente')
-def grava_cliente(cliente: Cliente):
+def grava_cliente(cliente: Cliente, use:Usuario=Depends(usuario_da_sessao)):
     """
     Grava um cliente avulso.
     Você também pode gravar clientes através

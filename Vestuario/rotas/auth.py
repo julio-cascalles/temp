@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from modelos.auth import (
     ALGORITMO_PADRAO, CHAVE_ACESSO,
-    DURACAO_TOKEN, Usuario, Token
+    DURACAO_TOKEN, Usuario, Token, Login
 )
 
 
@@ -49,14 +49,14 @@ def registra_usuario(dados: Usuario):
     return cria_novo_token(user)
 
 @router.post("/login", response_model=Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
+def login(login_form: Login):
     # --- Verifica se o email existe e a senha confere: ---
-    encontrado = Usuario.find(email=form_data.username)
+    encontrado = Usuario.find(email=login_form.username)
     if not encontrado:
         email_invalido = True
     else:
         user = encontrado[0]
-        email_invalido = not user.senha_valida(form_data.password)        
+        email_invalido = not user.senha_valida(login_form.password)        
     # -----------------------------------------------------
     if email_invalido:
         raise HTTPException(

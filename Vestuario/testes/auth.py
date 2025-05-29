@@ -6,7 +6,7 @@ from uuid import uuid4
 def registra_usuario_ok(client: TestClient) -> bool:
     dados = MOCK_AUTH
     dados['email'] = 'teste_{}@xyz.com'.format(
-        str(uuid4)  # --- Email único para não dar erro
+        str(uuid4())  # --- Email único para não dar erro
     )
     res = client.post("/registra_usuario", json=dados)
     return res.status_code == 200
