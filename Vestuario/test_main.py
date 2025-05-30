@@ -1,10 +1,13 @@
 from fastapi.testclient import TestClient
 from rotas.util.app import create_app
 from modelos.util.mongo_table import MongoTable, TEST_DATABASE
-from testes.auth import registra_usuario_ok, registra_usuario_falha
+from testes.auth import (
+    registra_usuario_ok, registra_usuario_falha,
+    primeiro_acesso, RetornoAdmin
+)
 from testes.campanha import lancamento, prospeccao, liquidacao, encerrar_campanha
 from testes.cliente import grava_cliente
-from testes.produto import grava_produto, Retorno
+from testes.produto import grava_produto, RetornoProduto
 from testes.dados import MOCK_AUTH, MOCK_AUTH2
 from testes.util.login import get_headers
 
@@ -36,13 +39,16 @@ def test_cliente():
     assert grava_cliente(client)
 
 def test_falha_produto():
-    assert grava_produto(client) == Retorno.PRODUTO_ERR_SEM_ACESSO
+    assert grava_produto(client) == RetornoProduto.PRODUTO_ERR_SEM_ACESSO
 
 def test_produto():
     USUARIO_COM_ACESSO_GRAVAR_PROD = 2
-    assert Retorno.PRODUTO_GRAVOU_TUDO_OK == grava_produto(
+    assert RetornoProduto.PRODUTO_GRAVOU_TUDO_OK == grava_produto(
         client, USUARIO_COM_ACESSO_GRAVAR_PROD
     )
 
 def test_encerrar_campanha():
     assert encerrar_campanha(client)
+
+def test_primeiro_acesso():
+    assert RetornoAdmin.ADMIN_GRAVOU_TUDO_OK == primeiro_acesso(client)

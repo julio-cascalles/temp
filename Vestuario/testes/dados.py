@@ -73,3 +73,7 @@ MOCK_AUTH2 = {
     "nome": "Apolinário Pacífico Armando Guerra",
     "senha": "m0XK0f*3g:9e"
 }
+MOCK_ADMIN = {
+    "email": "", "nome": "",
+    "senha": "u4]*0jK9Zv5m"
+}

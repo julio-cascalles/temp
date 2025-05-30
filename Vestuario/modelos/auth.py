@@ -15,7 +15,7 @@ cypt_ctx = CryptContext(
 CHAVE_ACESSO = os.getenv("CHAVE_ACESSO", "senha-padrao")
 ALGORITMO_PADRAO = "HS256"
 DURACAO_TOKEN = 30
-
+CAMPO_SENHA_TEMP = 'senha temporária'
 
 class Token(BaseModel):
     access_token: str
@@ -52,20 +52,20 @@ class Usuario(BaseModel, MongoTable):
 
     @classmethod
     def primeiro_acesso(cls, nomes: list, acessos: list=ACESSOS_BASICOS) -> list:
-        criados = []
+        novos = {}
         for nome in nomes:
             temp = Permissao.cria_senha(acessos)
-            novo = cls(
+            obj = cls(
                 email='{}@{}'.format(
                     '-'.join(nome.lower().split()),
                     SUFIXO_EMAIL_COMPANHIA
                 ),
-                nome=nome, senha=Usuario.encripta_senha(senha),
+                nome=nome, senha=Usuario.encripta_senha(temp),
                 id=sum(acessos),
             )
-            novo.save()
-            criados.append({
-                'email': novo.email,
-                'senha temporária': temp
-            })
-        return criados
+            obj.save()
+            novos[nome] = {
+                'email': obj.email,
+                CAMPO_SENHA_TEMP: temp
+            }
+        return novos

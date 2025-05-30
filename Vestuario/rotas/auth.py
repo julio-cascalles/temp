@@ -96,11 +96,10 @@ def primeiro_acesso(nomes: list[str], user:Usuario=Depends(usuario_da_sessao)):
             status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
             detail=f'{primeiro_nome}, você não tem permissão de admin.'
         )
-    return {
-        'Usuários criados': Usuario.primeiro_acesso(nomes)
-    } # [To-Do] Talvez enviar para cada novo email sua senha temporária
+    return Usuario.primeiro_acesso(nomes)
+    # [To-Do] Talvez enviar para cada novo email sua senha temporária
 
-@router.put('/nova_senha')
+@router.put('/mudar_senha')
 def nova_senha(login_form: Login, nova_senha: str, confirmacao: str):
     user = localiza_usuario(login_form)
     if not user:
