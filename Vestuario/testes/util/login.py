@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from testes.dados import MOCK_ADMIN
+from modelos.util.acesso import ADMIN_PADRAO
 
 
 def header_from_resp(resp) -> dict:
@@ -16,7 +16,7 @@ def get_headers(client: TestClient, dados:dict) -> dict:
     return header_from_resp(res)
 
 def get_admin(client: TestClient) -> dict:
-    res = client.post("/registra_usuario", json=MOCK_ADMIN)
+    res = client.post("/registra_usuario", json=ADMIN_PADRAO)
     if res.status_code != 200:
         return None
     return header_from_resp(res)

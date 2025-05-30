@@ -6,7 +6,7 @@ from modelos.auth import (
     ALGORITMO_PADRAO, CHAVE_ACESSO, 
     DURACAO_TOKEN, Usuario, Token, Login
 )
-from modelos.util.acesso import Permissao
+from modelos.util.acesso import Permissao, ADMIN_PADRAO
 
 
 router = APIRouter()
@@ -35,26 +35,29 @@ def usuario_da_sessao(token: str = Depends(oauth2_scheme)):
     return user[0]
 
 @router.post("/registra_usuario", response_model=Token)
-def registra_usuario(dados: Usuario):
-    permissoes = Permissao.permissoes_da_senha(dados.senha)
+def registra_usuario(user: Usuario):
+    permissoes = Permissao.permissoes_da_senha(user.senha)
     if Permissao.admin_senhas in permissoes:
-        if dados.senha != "u4]*0jK9Zv5m":
+        dados = user.model_dump()
+        tudo_igual = all(
+            ADMIN_PADRAO[campo] == dados[campo]
+            for campo in ('email', 'senha')
+        )
+        if not tudo_igual:
             raise HTTPException(
                 status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
                 detail='Você não pode criar um administrador.'
             )
-        dados.email = 'admin@admin.admin'
-        dados.nome = 'Admin do Sistema'
-    if Usuario.find(email=dados.email):
+    if Usuario.find(email=user.email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Este email já está em uso!"
         )
     user = Usuario(
-        email=dados.email,
-        nome=dados.nome,
+        email=user.email,
+        nome=user.nome,
         id=sum(permissoes),
-        senha=Usuario.encripta_senha(dados.senha),
+        senha=Usuario.encripta_senha(user.senha),
     )
     user.save()
     return cria_novo_token(user)

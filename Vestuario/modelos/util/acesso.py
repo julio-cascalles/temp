@@ -7,6 +7,12 @@ from string import (
 )
 from random import sample, shuffle
 
+ADMIN_PADRAO = {
+    "email": "admin@admin.admin",
+    "nome": "Admin do Sistema",
+    "senha": "u4]*0jK9Zv5m"
+}
+
 
 class Permissao(IntFlag):
     get_midias     =    1
