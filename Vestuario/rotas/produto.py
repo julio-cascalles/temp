@@ -1,17 +1,26 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from modelos.produto import Produto
+from modelos.auth import Usuario
+from rotas.auth import usuario_da_sessao
+from modelos.util.acesso import Permissao
 from modelos.util.categorias import Categoria
 
 
 router = APIRouter()
 
 @router.post('/produto')
-def grava_produto(produto: Produto):
+def grava_produto(produto: Produto, user:Usuario=Depends(usuario_da_sessao)):
     """
     Grava um produto avulso.
     Você também pode gravar produtos através
     de campanhas de *Lançamento*: `/campanha/lancamento`
     """
+    if Permissao.post_produto not in user.permissoes:
+        primeiro_nome = user.nome.split()[0]
+        raise HTTPException(
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+            detail=f'{primeiro_nome}, você não tem permissão para gravar produtos.'
+        )
     duplicado = Produto.find(nome=produto.nome)
     if duplicado:
         raise HTTPException(

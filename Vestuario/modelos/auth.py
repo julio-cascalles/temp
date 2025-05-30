@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from passlib.context import CryptContext
 from pydantic import BaseModel, field_validator
 from modelos.util.mongo_table import MongoTable
+from modelos.util.acesso import Permissao
 
 
 load_dotenv()
@@ -38,3 +39,7 @@ class Usuario(BaseModel, MongoTable):
 
     def senha_valida(self, senha_digitada: str) -> bool:
         return cypt_ctx.verify(senha_digitada, self.senha)
+
+    @property
+    def permissoes(self) -> list[Permissao]:
+        return Permissao.permissoes_da_senha(self.senha)

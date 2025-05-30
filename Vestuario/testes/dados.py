@@ -66,5 +66,10 @@ MOCK_LIQUIDACAO = {
 MOCK_AUTH = {
   "email": "ivokovi-pallindromo@juniper.xom",
   "nome": "Ivokovi Pallindromo",
-  "senha": "z4oqR1/Ad*K"
+  "senha": "A6iL!d4de$"
+}
+MOCK_AUTH2 = {
+    "email": "apague-me@cooperfeitto.br",
+    "nome": "Apolinário Pacífico Armando Guerra",
+    "senha": "'m0XK0f*3g:9e'"
 }
