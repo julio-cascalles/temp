@@ -16,8 +16,9 @@ MongoTable.DATABASE_NAME = TEST_DATABASE
 
 
 def test_auth_sucesso():
-    assert registra_usuario_ok(client)
-    client.__annotations__['headers'] = get_headers(client, MOCK_AUTH)
+    for i, dados in enumerate([MOCK_AUTH, MOCK_AUTH2], start=1):
+        assert registra_usuario_ok(client, dados)
+        client.__annotations__[f'headers{i}'] = get_headers(client, dados)
 
 def test_auth_falha():
     assert registra_usuario_falha(client)
@@ -38,9 +39,9 @@ def test_falha_produto():
     assert grava_produto(client) == Retorno.PRODUTO_ERR_SEM_ACESSO
 
 def test_produto():
-    headers_com_acesso = get_headers(client, MOCK_AUTH2)
+    USUARIO_COM_ACESSO_GRAVAR_PROD = 2
     assert Retorno.PRODUTO_GRAVOU_TUDO_OK == grava_produto(
-        client, headers_com_acesso
+        client, USUARIO_COM_ACESSO_GRAVAR_PROD
     )
 
 def test_encerrar_campanha():

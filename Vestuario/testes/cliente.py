@@ -8,7 +8,7 @@ from modelos.util.midias import Midia
 def grava_cliente(client: TestClient):
     res = client.post(
         '/cliente', json=MOCK_CLIENTE_AVULSO, 
-        headers=client.__annotations__['headers']
+        headers=client.__annotations__['headers1']
     )
     if res.status_code != 200:
         return False

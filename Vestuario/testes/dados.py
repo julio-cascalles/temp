@@ -71,5 +71,5 @@ MOCK_AUTH = {
 MOCK_AUTH2 = {
     "email": "apague-me@cooperfeitto.br",
     "nome": "Apolinário Pacífico Armando Guerra",
-    "senha": "'m0XK0f*3g:9e'"
+    "senha": "m0XK0f*3g:9e"
 }

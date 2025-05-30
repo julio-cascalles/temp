@@ -20,15 +20,12 @@ class Permissao(IntFlag):
     liquidacao     =  256
     prospeccao     =  512
     del_campanha   = 1024
+    admin_senhas   = 2048
 
     @classmethod
-    def permissoes_da_senha(cls, senha: str) -> list['Permissao']:
+    def permissoes_da_senha(cls, senha: str) -> 'Permissao':
         nivel_acesso = int( ''.join(re.findall(r'\d+', senha)) )
-        resultado = []
-        for permissao in cls:
-            if nivel_acesso & permissao.value:
-                resultado.append(permissao)
-        return resultado
+        return Permissao(nivel_acesso)
 
     @classmethod
     def cria_senha(cls, nivel_acesso: int|list['Permissao']) -> str:

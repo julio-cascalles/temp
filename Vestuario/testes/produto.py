@@ -12,18 +12,21 @@ class Retorno(Enum):
     PRODUTO_ERR_DETALHES   = 4
 
 
-def grava_produto(client: TestClient, headers: dict=None) -> Retorno:
-    nao_autorizado = headers is None
-    if nao_autorizado:
-        headers = client.__annotations__['headers']
+def grava_produto(client: TestClient, header_idx: int=1) -> Retorno:
+    nao_autorizado = (header_idx == 1)
+    #                   ^^^
+    #                    |
+    #                    +----------- O usuário padrão 
+    #                                 não está autorizado
+    #                                 a gravar produtos.
+    headers = client.__annotations__[f'headers{header_idx}']
     res = client.post(
         '/produto', json=MOCK_PRODUTO_AVULSO, headers=headers
     )
     if res.status_code != 200:
-        if nao_autorizado:
+        if nao_autorizado and res.status_code == 405:
             return Retorno.PRODUTO_ERR_SEM_ACESSO
-        else:
-            return Retorno.PRODUTO_ERR_VALIDACAO
+        return Retorno.PRODUTO_ERR_VALIDACAO
     # --- Consulta o produto para ver se gravou certo: ------
     busca = urlencode({'nome': MOCK_PRODUTO_AVULSO['categoria']})
     res = client.get(f'/produtos/{busca}')
