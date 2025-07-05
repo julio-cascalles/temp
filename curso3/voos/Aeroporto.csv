@@ -1,0 +1,194 @@
+estado,nome,id
+GO,Goiânia,GYN
+GO,Rio Verde,RVD
+GO,Caldas Novas,CLV
+Distrito Federal,Brasília,BSB
+MT,Alta Floresta,AFL
+MT,Barra dos Garças,BPG
+MT,Cáceres,CCX
+MT,Cuiabá,CGB
+MT,Rondonópolis,ROO
+MT,Tangará da Serra,TGQ
+MT,Sinop,OPS
+MT,Sorriso,SMT
+MS,Bonito,BYO
+MS,Cassilândia,CSS
+MS,Campo Grande,CGR
+MS,Corumbá,CMG
+MS,Dourados,DOU
+MS,Paranaíba,PBB
+MS,Ponta Porã,PMG
+MS,Três Lagoas,TJL
+AC,Cruzeiro do Sul,CZS
+AC,Rio Branco,RBR
+AP,Macapá,MCP
+AM,Barcelos,BAZ
+AM,Boca do Acre,BCR
+AM,Borba,RBB
+AM,Carauari,CAF
+AM,Coari,CIZ
+AM,Eirunepé,ERN
+AM,Fonte Boa,FBA
+AM,Humaitá,HUW
+AM,Itacoatiara,ITA
+AM,Lábrea,LBR
+AM,Manaus,MAO
+AM,Manicoré,MNX
+AM,Maués,MBZ
+AM,Novo Aripuanã,NVP
+AM,Parintins,PIN
+AM,Santa Isabel do Rio Negro,IRZ
+AM,Santo Antônio do Içá,IPG
+AM,São Gabriel da Cachoeira,SJL
+AM,São Paulo de Olivença,OLC
+AM,Tabatinga,TBT
+AM,Tefé,TFF
+PA,Altamira,ATM
+PA,Belém,BEL
+PA,Carajás,CKS
+PA,Itaituba,ITB
+PA,Marabá,MAB
+PA,Santarém,STM
+RO,Porto Velho,PVH
+RO,Ji PR,JPR
+RO,Cacoal,OAL
+RO,Vilhena,BVH
+RR,Boa Vista,BVB
+TO,Araguaína,AUX
+TO,Arraias,AAI
+TO,Dianópolis,DNO
+TO,Gurupi,GRP
+TO,Miracema do Tocantins,NTM
+TO,Palmas,PMW
+TO,Porto Nacional,PNB
+TO,Taquatinga,QHN
+AL,Arapiraca,APQ
+AL,Maceió,MCZ
+BA,Barra,BQQ
+BA,Barreiras,BRA
+BA,Belmonte,BVM
+BA,Bom Jesus da Lapa,LAZ
+BA,Brumado,BMS
+BA,Canavieiras,CNV
+BA,Caravelas,CRQ
+BA,Feira de Santana,FEC
+BA,Guanambi,GNM
+BA,Ilhéus,IOS
+BA,Ipiaú,IPU
+BA,Irecê,IRE
+BA,Itabuna,ITN
+BA,Ituberá,ITE
+BA,Jacobina,JCM
+BA,Jequié,JEQ
+BA,Lençóis,LEC
+BA,Mucuri,MVS
+BA,Paulo Afonso,PAV
+BA,Prado,PDF
+BA,Porto Seguro,BPS
+BA,Salvador,SSA
+BA,Teixeira de Freitas,TXF
+BA,Una,UNA
+BA,Valença,VAL
+BA,Vitória da Conquista,VDC
+CE,Aracati,ARX
+CE,Camocim,CMC
+CE,Fortaleza,FOR
+CE,Jericoacoara,JJD
+CE,Juazeiro do Norte,JDO
+MA,Balsas,BSS
+MA,Barreirinhas,BRB
+MA,Imperatriz,IMP
+MA,Pinheiro,PHI
+MA,São Luís,SLZ
+PB,Campina Grande,CPV
+PB,João Pessoa,JPA
+PE,Caruaru,CAU
+PE,Fernando de Noronha,FEN
+PE,Petrolina,PNZ
+PE,Recife,REC
+PE,Serra Talhada,SET
+PI,Floriano,FLB
+PI,Guadalupe,GDP
+PI,Parnaíba,PHB
+PI,Picos,PCS
+PI,Teresina,THE
+RN,Mossoró,MVF
+RN,Natal,NAT
+SE,Aracaju,AJU
+ES,Vitória,VIX
+ES,Cachoeiro de Itapemirim,CDI
+ES,Guarapari,GUZ
+ES,São Mateus,SBJ
+MG,Barbacena,QAK
+MG,Patos de Minas,POJ
+MG,Confins,CNF
+MG,Divinópolis,DIQ
+MG,Governador Valadares,GVR
+MG,Juiz de Fora,JDF
+MG,Montes Claros,MOC
+MG,Pampulha,PLU
+MG,Poços de Caldas,POO
+MG,São João del-Rei,JDR
+MG,Uberlândia,UDI
+MG,Uberaba,UBA
+MG,Zona da Mata,IZA
+RJ,Bartolomeu de Gusmão,SNZ
+RJ,Campos dos Goytacazes,CAW
+RJ,Cabo Frio,CFB
+RJ,Galeão,GIG
+RJ,Itaperuna,ITP
+RJ,Macaé,MEA
+RJ,Resende,QRZ
+RJ,Santos Dumont,SDU
+SP,Araçatuba,ARU
+SP,Araraquara,AQA
+SP,Assis,AIF
+SP,Avaré/Arandu,QVP
+SP,Barretos,BAT
+SP,Bauru/Arealva,JTC
+SP,Botucatu,QCP
+SP,Bragança Paulista,BJP
+SP,Campo dos Amarais,CPQ
+SP,Congonhas,CGH
+SP,Dracena,QDC
+SP,Guaratinguetá,GUJ
+SP,Guarulhos,GRU
+SP,Franca,FRC
+SP,Jundiaí,QDV
+SP,Lençóis Paulista,QGC
+SP,Lins,LIP
+SP,Marília,MII
+SP,Ourinhos,OUS
+SP,Piracicaba,QHB
+SP,Presidente Prudente,PPB
+SP,Ribeirão Preto,RAO
+SP,São Carlos,QSC
+SP,São José do Rio Preto,SJP
+SP,São José dos Campos,SJK
+SP,Sorocaba,SOD
+SP,Ubatuba,UBT
+SP,Viracopos,VCP
+SP,Votuporanga,VOT
+PR,Cascavel,CAC
+PR,Curitiba,CWB
+PR,Foz do Iguaçu,IGU
+PR,Londrina,LDB
+PR,Maringá,MGF
+PR,Ponta Grossa,PGZ
+PR,Umuarama,UMU
+PR,Pato Branco,PTO
+RS,Bagé,BGX
+RS,Caxias do Sul,CXJ
+RS,Passo Fundo,PFB
+RS,Porto Alegre,POA
+RS,Santa Maria,RIA
+RS,Uruguaiana,URG
+SC,Blumenau,BNU
+SC,Chapecó,XAP
+SC,Forquilhinha,CCM
+SC,Florianópolis,FLN
+SC,Jaguaruna,JJG
+SC,Joaçaba,JCB
+SC,Joinville,JOI
+SC,Lages,LAJ
+SC,Navegantes,NVT
