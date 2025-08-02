@@ -255,6 +255,7 @@ if __name__ == "__main__":
         ('16/7/2023',                        '2023-07-16'),
         ('hoje',                             '2025-09-01'),
         ('ontem',                            '2025-08-31'),
+        ('anteontem',                        '2025-08-30'),
         ('amanhã',                           '2025-09-02'),
         ('em 3 dias',                        '2025-09-04'),
         ('2 semanas atrás',                  '2025-08-18'),
@@ -286,6 +287,10 @@ if __name__ == "__main__":
         #  > Ninguém fala assim!  :/ 
     ]
     NoSeuTempo.DT_ATUAL = date(2025, 9, 1)
+    titulo = ' Se a data atual fosse {}... '.format(
+        str(NoSeuTempo.DT_ATUAL)
+    )
+    print(titulo.center(50, '#'))
     print('-'*50)
     for texto, esperado in TESTES:
         resultado = NoSeuTempo(texto).data
