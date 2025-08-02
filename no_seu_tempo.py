@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from dateutil.easter import easter
 
 
-class ExpressaoDeTempo:
+class NoSeuTempo:
     HOJE = None
     UNIDADES_TEMPO = {
         'dias': 1, 'semana': 7, 'semanas': 7,
@@ -172,10 +172,10 @@ if __name__ == "__main__":
         ('último natal',            '2024-12-25'),
         ('próximo carnaval',        '2026-02-17'),
     ]
-    ExpressaoDeTempo.HOJE = date(2025, 9, 1)
+    NoSeuTempo.HOJE = date(2025, 9, 1)
     print('-'*50)
     for texto, esperado in TESTES:
-        resultado = ExpressaoDeTempo(texto).data
+        resultado = NoSeuTempo(texto).data
         assert str(resultado) == esperado
         print(f'{texto:>30} = {resultado}')
     print('='*50)
