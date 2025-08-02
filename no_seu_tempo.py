@@ -79,13 +79,13 @@ class NoSeuTempo:
         ]
     
     def data_aproximada(self, txt: str) -> date:
-        POS_NEGATIVA = 2
+        POS_NEGATIVA = [2, 3]
         for i, regex in enumerate(self.expr_referencial()):
             encontrado = re.findall(regex, txt)
             if not encontrado:
                 continue
             unidade = encontrado[0]
-            num = -1 if i >= POS_NEGATIVA else 1
+            num = -1 if i in POS_NEGATIVA else 1
             if unidade not in self.UNIDADES_TEMPO:
                 dia_procurado = self.dia_da_semana(unidade)
                 if dia_procurado == -1:
@@ -115,7 +115,7 @@ class NoSeuTempo:
         return date(ano, 12, 25)
     
     def data_feriado(self, txt: str) -> date:
-        POS_NEGATIVA = 2
+        POS_NEGATIVA = [2, 3]
         FUNC_FERIADO = {
             'natal': self.natal, 'carnaval': self.carnaval
         }
@@ -123,11 +123,11 @@ class NoSeuTempo:
         resultado = None
         for i, regex in enumerate(BUSCAS):
             encontrado = re.findall(regex, txt)
-            if not encontrado or (nome_feriado := encontrado[0]) not in FUNC_FERIADO:
+            if not encontrado or encontrado[0] not in FUNC_FERIADO:
                 continue
-            func = FUNC_FERIADO[nome_feriado]
+            func = FUNC_FERIADO[encontrado[0]]
             resultado = func(self.HOJE.year)
-            if i >= POS_NEGATIVA and self.HOJE < resultado:
+            if i in POS_NEGATIVA and self.HOJE < resultado:
                 resultado = func(self.HOJE.year - 1)
             elif self.HOJE > resultado:
                 resultado = func(self.HOJE.year + 1)
