@@ -242,6 +242,7 @@ class NoSeuTempo:
         if not self.DT_ATUAL:
             self.DT_ATUAL = date.today()
         data = None
+        self.metodo = ''
         METODOS = (
             self.data_fixa, self.data_por_nome,
             self.data_relativa, self.data_ultimo_dia,
@@ -250,56 +251,67 @@ class NoSeuTempo:
         )
         for func in METODOS:
             data = func(txt)
-            if data: break
+            if data:
+                self.metodo = func.__name__
+                break
         self.data = data
+
+    @classmethod
+    def testar(cls):
+        TESTES = [
+            ('16/7/2023',                        '2023-07-16'),
+            ('hoje',                             '2025-09-01'),
+            ('ontem',                            '2025-08-31'),
+            ('anteontem',                        '2025-08-30'),
+            ('amanhã',                           '2025-09-02'),
+            ('em 3 dias',                        '2025-09-04'),
+            ('2 semanas atrás',                  '2025-08-18'),
+            ('25 de novembro de 2024',           '2024-11-25'),
+            ('25 de novembro',                   '2025-11-25'),
+            ('dia  14',                          '2025-09-14'),
+            ('25/nov',                           '2025-11-25'),
+            ('próxima semana',                   '2025-09-08'),
+            ('mês passado',                      '2025-08-01'),
+            ('ano passado',                      '2024-09-01'),
+            ('segunda passada',                  '2025-08-25'),
+            ('última terça',                     '2025-08-26'),
+            ('próxima quarta',                   '2025-09-03'),
+            ('quinta que vem',                   '2025-09-04'),
+            ('último natal',                     '2024-12-25'),
+            ('próximo carnaval',                 '2026-02-17'),
+            ('daqui a 15 dias',                  '2025-09-16'),
+            ('último dia do mês        ',        '2025-09-30'),
+            ('ultimo dia do mês passado',        '2025-08-31'),
+            ('último dia do próximo mes',        '2025-10-31'),
+            ('último dia do mês que vem',        '2025-10-31'),
+            ('último dia de fevereiro  ',        '2025-02-28'),
+            ('primeira segunda-feira de julho',  '2025-07-07'),
+            ('3a ultima quinta               ',  '2025-09-11'),
+            ('segundo domingo do próximo mês ',  '2025-10-12'),
+            ('dia 14 do mes passado',            '2025-08-14'),
+            #
+            # P.S.: Evitar complicações,
+            #       ... tipo "35 dias depois da 1a terça antes do carnaval de 2 anos atrás"
+            #  > Ninguém fala assim!  :/ 
+        ]
+        cls.DT_ATUAL = date(2025, 9, 1)
+        print('  ===============================================================================')
+        titulo = '            Data de referência para teste: {} \n'.format(
+            str(cls.DT_ATUAL)
+        )
+        print(titulo.center(50))
+        print('  +-------------------------------------+------------+----------------------------+')
+        print('  |                         Parâmetro   |  Resultado |      Método                |')
+        print('  +-------------------------------------+------------+----------------------------+')
+        for texto, esperado in TESTES:
+            obj = cls(texto)
+            resultado = obj.data
+            assert str(resultado) == esperado
+            print(f'  | {texto:>35} | {resultado} | {obj.metodo:<26} |')
+        print('  +-------------------------------------+------------+----------------------------+')
+        print('\n      (Resultado: 100% de sucesso!) \n')
+        print('  ===============================================================================')
 
 
 if __name__ == "__main__":
-    TESTES = [
-        ('16/7/2023',                        '2023-07-16'),
-        ('hoje',                             '2025-09-01'),
-        ('ontem',                            '2025-08-31'),
-        ('anteontem',                        '2025-08-30'),
-        ('amanhã',                           '2025-09-02'),
-        ('em 3 dias',                        '2025-09-04'),
-        ('2 semanas atrás',                  '2025-08-18'),
-        ('25 de novembro de 2024',           '2024-11-25'),
-        ('25 de novembro',                   '2025-11-25'),
-        ('dia  14',                          '2025-09-14'),
-        ('25/nov',                           '2025-11-25'),
-        ('próxima semana',                   '2025-09-08'),
-        ('mês passado',                      '2025-08-01'),
-        ('ano passado',                      '2024-09-01'),
-        ('segunda passada',                  '2025-08-25'),
-        ('última terça',                     '2025-08-26'),
-        ('próxima quarta',                   '2025-09-03'),
-        ('quinta que vem',                   '2025-09-04'),
-        ('último natal',                     '2024-12-25'),
-        ('próximo carnaval',                 '2026-02-17'),
-        ('daqui a 15 dias',                  '2025-09-16'),
-        ('último dia do mês        ',        '2025-09-30'),
-        ('ultimo dia do mês passado',        '2025-08-31'),
-        ('último dia do próximo mes',        '2025-10-31'),
-        ('último dia do mês que vem',        '2025-10-31'),
-        ('último dia de fevereiro  ',        '2025-02-28'),
-        ('primeira segunda-feira de julho',  '2025-07-07'),
-        ('3a ultima quinta               ',  '2025-09-11'),
-        ('segundo domingo do próximo mês ',  '2025-10-12'),
-        ('dia 14 do mes passado',            '2025-08-14'),
-        #
-        # P.S.: Evitar complicações,
-        #       ... tipo "35 dias depois da 1a terça antes do carnaval de 2 anos atrás"
-        #  > Ninguém fala assim!  :/ 
-    ]
-    NoSeuTempo.DT_ATUAL = date(2025, 9, 1)
-    titulo = ' Se a data atual fosse {}... '.format(
-        str(NoSeuTempo.DT_ATUAL)
-    )
-    print(titulo.center(50, '#'))
-    print('-'*50)
-    for texto, esperado in TESTES:
-        resultado = NoSeuTempo(texto).data
-        assert str(resultado) == esperado
-        print(f'{texto:>35} = {resultado}')
-    print('='*50)
-    print('PASSOU EM TODOS OS TESTES!'.center(50, '*'))
+    NoSeuTempo.testar()

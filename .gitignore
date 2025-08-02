@@ -1,1 +1,6 @@
-*.lnk
+/no_seu_tempo.egg-info
+/dist
+/.ipynb_checkpoints
+*/__pycache__/*
+__pycache__
+/build
