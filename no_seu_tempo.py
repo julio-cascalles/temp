@@ -12,6 +12,17 @@ NOMES_MESES = (
     'julho',  'agosto',  'setembro',
     'outubro','novembro','dezembro'
 )
+DIAS_SEMANA = {
+    'segunda': 0,
+    'terça': 1, 'terca': 1,
+    'quarta': 2,
+    'quinta': 3,
+    'sexta': 4,
+    'sábado': 5, 'sabado': 5,
+    'domingo': 6,
+}
+PREFIXO_ULT = '[úu]ltimo dia d[eo]'
+SUFIXO_MES  = 'mês|mes'
 
 
 class NoSeuTempo:
@@ -19,7 +30,7 @@ class NoSeuTempo:
     Escreva a data como você fala! ;)
     ---
     """
-    HOJE = None
+    DT_ATUAL = None
     UNIDADES_TEMPO = {
         'dias': 1, 'semana': 7, 'semanas': 7,
         'mês': MES_GENERICO,'mes': MES_GENERICO, 'meses': MES_GENERICO,
@@ -33,14 +44,11 @@ class NoSeuTempo:
                 return i
         return -1
   
-    def dia_da_semana(self, dia: str) -> int:
-        DIAS_SEMANA = (
-            'segunda', 'terça', 'quarta',
-            'quinta', 'sexta', 'sábado', 'domingo'
-        )
+    def dia_da_semana(self, txt: str) -> int:        
+        dia, *_ = re.split(r'[-]feira', txt)
         if dia not in DIAS_SEMANA:
             return -1
-        return DIAS_SEMANA.index(dia)
+        return DIAS_SEMANA[dia]
 
     def data_fixa(self, txt: str) -> date:
         separadores = r'(\s+de\s+|[-/])'
@@ -48,7 +56,7 @@ class NoSeuTempo:
         if por_extenso:
             dia, _, mes, _, ano =  por_extenso[0]
             if not ano:
-                ano = self.HOJE.year
+                ano = self.DT_ATUAL.year
             if mes.isalpha():
                 mes = self.numero_do_mes(mes)
                 if mes == -1:
@@ -58,13 +66,12 @@ class NoSeuTempo:
     
     def data_por_nome(self, txt: str) -> date:
         EXPRESSOES_DE_DATA =  {
-            "hoje":   self.HOJE,
-            "ontem":  self.HOJE - timedelta(days=1),
-            "amanhã": self.HOJE + timedelta(days=1)
+            "hoje":   0, "ontem":  -1, "amanhã": +1, "anteontem": -2,
         }
         if txt in EXPRESSOES_DE_DATA:
-            return EXPRESSOES_DE_DATA[txt]
-        return 
+            num = EXPRESSOES_DE_DATA[txt]
+            return self.DT_ATUAL + timedelta(days=num)
+        return None
     
     def converte_unidade_tempo(self, unidade: str, num: int=1):
         dias = self.UNIDADES_TEMPO[unidade]
@@ -84,7 +91,7 @@ class NoSeuTempo:
                 break
         if not encontrado or unidade not in self.UNIDADES_TEMPO:
             return None
-        return self.HOJE + self.converte_unidade_tempo(unidade, int(num))
+        return self.DT_ATUAL + self.converte_unidade_tempo(unidade, int(num))
     
     @staticmethod
     def expr_referencial(conteudo: str=r'\w+', substituir_ultimo: bool=False) -> list:
@@ -108,21 +115,21 @@ class NoSeuTempo:
                 dia_procurado = self.dia_da_semana(unidade)
                 if dia_procurado == -1:
                     return None
-                resultado = self.HOJE + timedelta(days=num)
+                resultado = self.DT_ATUAL + timedelta(days=num)
                 while resultado.weekday() != dia_procurado:
                     resultado += timedelta(days=num)
                 return resultado
             break
         if not encontrado:
             return None
-        return self.HOJE + self.converte_unidade_tempo(unidade, num)
+        return self.DT_ATUAL + self.converte_unidade_tempo(unidade, num)
     
     def data_apenas_dia(self, txt: str) -> date:
         encontrado = re.findall(r'dia\s+(\d+)$', txt)
         if not encontrado:
             return None
         dia = encontrado[0]
-        return self.HOJE.replace(day=int(dia))
+        return self.DT_ATUAL.replace(day=int(dia))
     
     def carnaval(self, ano: int) -> date:
         return easter(ano) - timedelta(days=47)
@@ -142,93 +149,147 @@ class NoSeuTempo:
             if not encontrado or encontrado[0] not in FUNC_FERIADO:
                 continue
             func = FUNC_FERIADO[encontrado[0]]
-            resultado = func(self.HOJE.year)
-            if i in POS_NEGATIVA and self.HOJE < resultado:
-                resultado = func(self.HOJE.year - 1)
-            elif self.HOJE > resultado:
-                resultado = func(self.HOJE.year + 1)
+            resultado = func(self.DT_ATUAL.year)
+            if i in POS_NEGATIVA and self.DT_ATUAL < resultado:
+                resultado = func(self.DT_ATUAL.year - 1)
+            elif self.DT_ATUAL > resultado:
+                resultado = func(self.DT_ATUAL.year + 1)
         return resultado
-    
+
+    def extrai_mes(self, nome: str) -> int:
+        if not nome or re.search(fr'^({SUFIXO_MES})$', nome):
+            return self.DT_ATUAL.month
+        mes = self.numero_do_mes(nome)
+        if mes != -1:
+            return mes
+        BUSCAS = self.expr_referencial(SUFIXO_MES, True)
+        POS_NEGATIVA = [2, 3]
+        for i, regex in enumerate(BUSCAS):
+            if not re.search(regex, nome):
+                continue
+            if i in POS_NEGATIVA:
+                return self.DT_ATUAL.month - 1
+            return self.DT_ATUAL.month + 1
+        return -1
+
     def data_ultimo_dia(self, txt: str) -> date:
-        PREFIXO = '[úu]ltimo dia d[eo]'
-        SUFIXO  = 'mês|mes'
-        # ------------------------------------------------------
-        def extrai_mes(nome: str) -> int:
-            mes = self.numero_do_mes(nome)
-            if mes != -1:
-                return mes
-            if re.search(fr'^({SUFIXO})$', nome):
-                return self.HOJE.month
-            BUSCAS = self.expr_referencial(SUFIXO, True)
-            POS_NEGATIVA = [2, 3]
-            for i, regex in enumerate(BUSCAS):
-                if not re.search(regex, nome):
-                    continue
-                if i in POS_NEGATIVA:
-                    return self.HOJE.month - 1
-                return self.HOJE.month + 1
-            return -1
-        # ------------------------------------------------------
-        encontrado = re.findall(fr'({PREFIXO})\s+(.*)', txt)
+        encontrado = re.findall(fr'({PREFIXO_ULT})\s+(.*)', txt)
         if not encontrado:
             return None
-        mes = extrai_mes(encontrado[0][-1])
+        mes = self.extrai_mes(encontrado[0][-1])
         if mes == -1:
             return None
-        dia = monthrange(self.HOJE.year, mes)[-1]
-        return date(self.HOJE.year, mes, dia)
+        dia = monthrange(self.DT_ATUAL.year, mes)[-1]
+        return date(self.DT_ATUAL.year, mes, dia)
+
+    def loc_semana(self, mes: int|str, dia_semana: int|str, incr: int=1, qtd: int=1) -> date:
+        """Localiza o dia da semana dentro do mês"""
+        ano = self.DT_ATUAL.year
+        if isinstance(mes, str):
+            mes = self.extrai_mes(mes)
+            if mes == -1: return None
+        if isinstance(dia_semana, str):
+            dia_semana = self.dia_da_semana(dia_semana)
+            if dia_semana == -1: return None
+        ULTIMO_DIA = monthrange(ano, mes)[-1]
+        if incr < 0:            
+            pos = ULTIMO_DIA
+        else:
+            pos = 1
+        dt_ref = None
+        while pos > 0 or pos <= ULTIMO_DIA:
+            dt_ref = date(ano, mes, pos)
+            if dt_ref.weekday() == dia_semana:
+                qtd -= 1
+                if qtd == 0: break
+            pos += incr
+        return dt_ref
+    
+    @staticmethod
+    def substitui_ordinal(txt: str) -> str:
+        ORDINAIS = ['primeir', 'segund', 'terceir', 'quart',]
+        RX_ORDINAIS = '|'.join(f'{expr}[ao]' for expr in ORDINAIS)
+        encontrado = re.search(fr'^({RX_ORDINAIS})', txt)
+        if encontrado:
+            ini, fim = encontrado.span()
+            pos = ORDINAIS.index(txt[ini:fim-1])+1
+            txt = f'{pos}{txt[fim-1]}{txt[fim:]}'
+        return txt
+    
+    def data_por_posicao_calend(self, txt: str) -> date:
+        txt = self.substitui_ordinal(txt)
+        pos, ord, neg, dia, sufx, prep, mes = (
+            r'(\d+)',      r'([aªoº]\s+)', 
+            r'([uú]ltim[ao]\s+)*',
+            r'|'.join(DIAS_SEMANA),
+            r'([-]feira\s+)*',
+            r'(d[eo]\s+)*',      r'(.*)'
+        )
+        encontrado = re.findall(
+            fr'{pos}{ord}{neg}({dia}){sufx}{prep}{mes}', txt
+        )
+        if not encontrado:
+            return None
+        pos, _, neg, dia, _, _, mes = encontrado[0]
+        return self.loc_semana(mes, dia, -1 if neg else 1, int(pos))
 
     def __init__(self, txt: str):
         txt = txt.lower().strip()
-        if not self.HOJE:
-            self.HOJE = date.today()
+        if not self.DT_ATUAL:
+            self.DT_ATUAL = date.today()
         data = None
         METODOS = (
             self.data_fixa, self.data_por_nome,
             self.data_relativa, self.data_ultimo_dia,
-            self.data_aproximada,
-            self.data_apenas_dia, self.data_feriado,            
+            self.data_apenas_dia, self.data_por_posicao_calend,
+            self.data_aproximada, self.data_feriado,            
         )
         for func in METODOS:
             data = func(txt)
-            if data:
-                break
+            if data: break
         self.data = data
 
 
 if __name__ == "__main__":
     TESTES = [
-        ('16/7/2023',                   '2023-07-16'),
-        ('hoje',                        '2025-09-01'),
-        ('ontem',                       '2025-08-31'),
-        ('amanhã',                      '2025-09-02'),
-        ('em 3 dias',                   '2025-09-04'),
-        ('2 semanas atrás',             '2025-08-18'),
-        ('25 de novembro de 2024',      '2024-11-25'),
-        ('25 de novembro',              '2025-11-25'),
-        ('dia  14',                     '2025-09-14'),
-        ('25/nov',                      '2025-11-25'),
-        ('próxima semana',              '2025-09-08'),
-        ('mês passado',                 '2025-08-01'),
-        ('ano passado',                 '2024-09-01'),
-        ('segunda passada',             '2025-08-25'),
-        ('última terça',                '2025-08-26'),
-        ('próxima quarta',              '2025-09-03'),
-        ('quinta que vem',              '2025-09-04'),
-        ('último natal',                '2024-12-25'),
-        ('próximo carnaval',            '2026-02-17'),
-        ('daqui a 15 dias',             '2025-09-16'),
-        ('último dia do mês        ',   '2025-09-30'),
-        ('ultimo dia do mês passado',   '2025-08-31'),
-        ('último dia do próximo mes',   '2025-10-31'),
-        ('último dia do mês que vem',   '2025-10-31'),
-        ('último dia de fevereiro  ',   '2025-02-28'),
+        ('16/7/2023',                        '2023-07-16'),
+        ('hoje',                             '2025-09-01'),
+        ('ontem',                            '2025-08-31'),
+        ('amanhã',                           '2025-09-02'),
+        ('em 3 dias',                        '2025-09-04'),
+        ('2 semanas atrás',                  '2025-08-18'),
+        ('25 de novembro de 2024',           '2024-11-25'),
+        ('25 de novembro',                   '2025-11-25'),
+        ('dia  14',                          '2025-09-14'),
+        ('25/nov',                           '2025-11-25'),
+        ('próxima semana',                   '2025-09-08'),
+        ('mês passado',                      '2025-08-01'),
+        ('ano passado',                      '2024-09-01'),
+        ('segunda passada',                  '2025-08-25'),
+        ('última terça',                     '2025-08-26'),
+        ('próxima quarta',                   '2025-09-03'),
+        ('quinta que vem',                   '2025-09-04'),
+        ('último natal',                     '2024-12-25'),
+        ('próximo carnaval',                 '2026-02-17'),
+        ('daqui a 15 dias',                  '2025-09-16'),
+        ('último dia do mês        ',        '2025-09-30'),
+        ('ultimo dia do mês passado',        '2025-08-31'),
+        ('último dia do próximo mes',        '2025-10-31'),
+        ('último dia do mês que vem',        '2025-10-31'),
+        ('último dia de fevereiro  ',        '2025-02-28'),
+        ('primeira segunda-feira de julho',  '2025-07-07'),
+        ('3a ultima quinta               ',  '2025-09-11'),
+        ('segundo domingo do próximo mês ',  '2025-10-12'),
+        #
+        # P.S.: Evitar complicações,
+        #       ... tipo "35 dias depois da 1a terça antes do carnaval de 2 anos atrás"
+        #  > Ninguém fala assim!  :/ 
     ]
-    NoSeuTempo.HOJE = date(2025, 9, 1)
+    NoSeuTempo.DT_ATUAL = date(2025, 9, 1)
     print('-'*50)
     for texto, esperado in TESTES:
         resultado = NoSeuTempo(texto).data
         assert str(resultado) == esperado
-        print(f'{texto:>30} = {resultado}')
+        print(f'{texto:>35} = {resultado}')
     print('='*50)
     print('PASSOU EM TODOS OS TESTES!'.center(50, '*'))
