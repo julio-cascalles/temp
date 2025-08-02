@@ -125,11 +125,15 @@ class NoSeuTempo:
         return self.DT_ATUAL + self.converte_unidade_tempo(unidade, num)
     
     def data_apenas_dia(self, txt: str) -> date:
-        encontrado = re.findall(r'dia\s+(\d+)$', txt)
+        encontrado = re.findall(r'dia\s+(\d+)(.*)', txt)
         if not encontrado:
             return None
-        dia = encontrado[0]
-        return self.DT_ATUAL.replace(day=int(dia))
+        dia, *resto = encontrado[0]
+        dia = int(dia)
+        if not resto:
+            return self.DT_ATUAL.replace(day=dia)
+        mes = self.extrai_mes(resto[0])
+        return date(self.DT_ATUAL.year, mes, dia)
     
     def carnaval(self, ano: int) -> date:
         return easter(ano) - timedelta(days=47)
@@ -281,6 +285,7 @@ if __name__ == "__main__":
         ('primeira segunda-feira de julho',  '2025-07-07'),
         ('3a ultima quinta               ',  '2025-09-11'),
         ('segundo domingo do próximo mês ',  '2025-10-12'),
+        ('dia 14 do mes passado',            '2025-08-14'),
         #
         # P.S.: Evitar complicações,
         #       ... tipo "35 dias depois da 1a terça antes do carnaval de 2 anos atrás"
