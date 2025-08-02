@@ -25,6 +25,26 @@ PREFIXO_ULT = '[úu]ltimo dia d[eo]'
 SUFIXO_MES  = 'mês|mes'
 
 
+class Feriado:
+    @classmethod
+    def no_ano(cls, ano: int) -> date:
+        raise NotImplementedError('Use as classes filhas de Feriado')
+    
+    @classmethod
+    def nome(cls):
+        return cls.__name__.lower()
+
+class Carnaval(Feriado):
+    @classmethod
+    def no_ano(cls, ano: int) -> date:
+        return easter(ano) - timedelta(days=47)
+
+class Natal(Feriado):
+    @classmethod
+    def no_ano(cls, ano: int) -> date:
+        return date(ano, 12, 25)
+
+
 class NoSeuTempo:
     """
     Escreva a data como você fala! ;)
@@ -143,21 +163,21 @@ class NoSeuTempo:
     
     def data_feriado(self, txt: str) -> date:
         POS_NEGATIVA = [2, 3]
-        FUNC_FERIADO = {
-            'natal': self.natal, 'carnaval': self.carnaval
+        CLASSES_FERIADO = {
+            cls.nome(): cls for cls in Feriado.__subclasses__()
         }
-        BUSCAS = self.expr_referencial( '|'.join(FUNC_FERIADO) )
+        BUSCAS = self.expr_referencial( '|'.join(CLASSES_FERIADO) )
         resultado = None
         for i, regex in enumerate(BUSCAS):
             encontrado = re.findall(regex, txt)
-            if not encontrado or encontrado[0] not in FUNC_FERIADO:
+            if not encontrado or encontrado[0] not in CLASSES_FERIADO:
                 continue
-            func = FUNC_FERIADO[encontrado[0]]
-            resultado = func(self.DT_ATUAL.year)
+            cls = CLASSES_FERIADO[encontrado[0]]
+            resultado = cls.no_ano(self.DT_ATUAL.year)
             if i in POS_NEGATIVA and self.DT_ATUAL < resultado:
-                resultado = func(self.DT_ATUAL.year - 1)
+                resultado = cls.no_ano(self.DT_ATUAL.year - 1)
             elif self.DT_ATUAL > resultado:
-                resultado = func(self.DT_ATUAL.year + 1)
+                resultado = cls.no_ano(self.DT_ATUAL.year + 1)
         return resultado
 
     def extrai_mes(self, nome: str) -> int:
