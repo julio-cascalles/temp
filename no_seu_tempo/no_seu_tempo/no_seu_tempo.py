@@ -301,8 +301,13 @@ class NoSeuTempo:
             fr'{pos}{ord}{neg}({dia}){sufx}{prep}{mes}', txt
         )
         if not encontrado:
-            return None
-        pos, _, neg, dia, _, _, mes = encontrado[0]
+            encontrado = re.findall(fr'{neg}({dia})\s+{prep}(.*)', txt)
+            if not encontrado:
+                return None
+            neg, dia, _, mes = encontrado[0]
+            pos = 1
+        else:
+            pos, _, neg, dia, _, _, mes = encontrado[0]
         return self.loc_semana(mes, dia, -1 if neg else 1, int(pos))
 
     def __init__(self, txt: str):
@@ -403,5 +408,7 @@ class NoSeuTempo:
 
 
 if __name__ == "__main__":
-    # NoSeuTempo.testar()
-    NoSeuTempo.prompt()
+    NoSeuTempo.testar()
+    obj = NoSeuTempo('ultima terça de setembro de 23')
+    print(obj.data)
+    # NoSeuTempo.prompt()
