@@ -60,7 +60,8 @@ class NoSeuTempo:
     @staticmethod
     def numero_do_mes(mes: str) -> int:
         for i, nome in enumerate(NOMES_MESES, 1):
-            if nome == mes or mes == nome[:3]:
+            regex = fr'^({nome}|{nome[:3]})\b'
+            if re.search(regex, mes):
                 return i
         return -1
   
@@ -162,21 +163,32 @@ class NoSeuTempo:
         return date(ano, 12, 25)
     
     def data_feriado(self, txt: str) -> date:
-        POS_NEGATIVA = [2, 3]
+        POS_NEGATIVA = [3, 4]
         CLASSES_FERIADO = {
             cls.nome(): cls for cls in Feriado.__subclasses__()
         }
-        BUSCAS = self.expr_referencial( '|'.join(CLASSES_FERIADO) )
+        REGEX_FERIADO = '|'.join(CLASSES_FERIADO)
+        BUSCAS = [
+            self.busca_ano_numerico(REGEX_FERIADO)
+        ] + self.expr_referencial(REGEX_FERIADO)
         resultado = None
         for i, regex in enumerate(BUSCAS):
             encontrado = re.findall(regex, txt)
-            if not encontrado or encontrado[0] not in CLASSES_FERIADO:
+            if not encontrado:
                 continue
-            cls = CLASSES_FERIADO[encontrado[0]]
-            resultado = cls.no_ano(self.DT_ATUAL.year)
-            if i in POS_NEGATIVA and self.DT_ATUAL < resultado:
-                resultado = cls.no_ano(self.DT_ATUAL.year - 1)
-            elif self.DT_ATUAL > resultado:
+            if i == 0:
+                nome, ano = encontrado[0]
+                ano = self.converte_ano_abrev(ano)
+            else:
+                nome, ano = encontrado[0], self.DT_ATUAL.year
+            if nome not in CLASSES_FERIADO:
+                continue
+            cls = CLASSES_FERIADO[nome]
+            resultado = cls.no_ano(ano)
+            if i in POS_NEGATIVA:
+                if self.DT_ATUAL < resultado:
+                    resultado = cls.no_ano(self.DT_ATUAL.year - 1)
+            elif i > 0 and self.DT_ATUAL > resultado:
                 resultado = cls.no_ano(self.DT_ATUAL.year + 1)
         return resultado
 
@@ -206,9 +218,38 @@ class NoSeuTempo:
         dia = monthrange(self.DT_ATUAL.year, mes)[-1]
         return date(self.DT_ATUAL.year, mes, dia)
 
+    def converte_ano_abrev(self, abrev: str='') -> int:
+        if len(abrev) == 4:
+            return int(abrev)
+        atual = str(self.DT_ATUAL.year)
+        seculo, ano = [ int(atual[slice(*pos)]) for pos in [(0,2), (2,4)] ]
+        if int(abrev) > ano:
+            seculo -= 1
+        return int(f'{seculo}{abrev}')
+    
+    def busca_ano_numerico(self, regex: str='') -> str:
+        return fr'({regex})\s+de\s+(\d+)'
+
+    def extrai_ano(self, expr: str) -> int:
+        encontrado = re.findall(self.busca_ano_numerico(), expr)
+        if encontrado:
+            return self.converte_ano_abrev(
+                encontrado[0][-1]
+            )
+        ano = self.DT_ATUAL.year
+        BUSCAS = self.expr_referencial('ano', True)
+        POS_NEGATIVA = [2, 3]
+        for i, regex in enumerate(BUSCAS):
+            if not re.search(regex, expr):
+                continue
+            if i in POS_NEGATIVA:
+                return ano - 1
+            return ano + 1
+        return ano
+
     def loc_semana(self, mes: int|str, dia_semana: int|str, incr: int=1, qtd: int=1) -> date:
         """Localiza o dia da semana dentro do mês"""
-        ano = self.DT_ATUAL.year
+        ano = self.extrai_ano(mes)
         if isinstance(mes, str):
             mes = self.extrai_mes(mes)
             if mes == -1: return None
@@ -334,4 +375,20 @@ class NoSeuTempo:
 
 
 if __name__ == "__main__":
-    NoSeuTempo.testar()
+    # NoSeuTempo.testar()
+    """
+    Sugestões:
+        * Carnaval de 94
+        * primeira segunda-feira de abril de 2023
+    """
+    param = 'hoje'
+    print('-'*50)
+    print('NoSeuTempo - Escreva a data como você fala!')
+    print('-'*50)
+    while param:
+        obj = NoSeuTempo(param)
+        print('\t{} = {} - ({})'.format(
+            param, obj.data, obj.metodo
+        ))
+        param = input('Digite uma expressão de data (ou VAZIO para encerrar):')
+    print('>>>> Até breve! ;)\n', '*'*50)

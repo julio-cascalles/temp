@@ -1,5 +1,6 @@
 /no_seu_tempo.egg-info
 /dist
+/dist*.*
 /.ipynb_checkpoints
 */__pycache__/*
 __pycache__
