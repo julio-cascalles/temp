@@ -72,11 +72,13 @@ class NoSeuTempo:
         return DIAS_SEMANA[dia]
 
     def data_fixa(self, txt: str) -> date:
-        separadores = r'(\s+de\s+|[-/])'
-        por_extenso = re.findall(fr'(\d+){separadores}(\w+|\d+){separadores}*(\d+)*', txt)
+        separadores = r'(\s+d[eo]\s+|[-/])'
+        por_extenso = re.findall(fr'(\d+){separadores}(\w+|\d+){separadores}*(.*)', txt)
         if por_extenso:
             dia, _, mes, _, ano =  por_extenso[0]
-            if not ano:
+            if ano:
+                ano = self.extrai_ano(f'de {ano}')
+            else:
                 ano = self.DT_ATUAL.year
             if mes.isalpha():
                 mes = self.numero_do_mes(mes)
@@ -178,7 +180,7 @@ class NoSeuTempo:
                 continue
             if i == 0:
                 nome, ano = encontrado[0]
-                ano = self.converte_ano_abrev(ano)
+                ano = self.extrai_ano(ano)
             else:
                 nome, ano = encontrado[0], self.DT_ATUAL.year
             if nome not in CLASSES_FERIADO:
@@ -215,12 +217,13 @@ class NoSeuTempo:
         mes = self.extrai_mes(encontrado[0][-1])
         if mes == -1:
             return None
-        dia = monthrange(self.DT_ATUAL.year, mes)[-1]
-        return date(self.DT_ATUAL.year, mes, dia)
+        ano = self.extrai_ano(encontrado[0][-1])
+        dia = monthrange(ano, mes)[-1]
+        return date(ano, mes, dia)
 
     def converte_ano_abrev(self, abrev: str='') -> int:
         if len(abrev) == 4:
-            return int(abrev)
+            return int(abrev) # Não está abreviado
         atual = str(self.DT_ATUAL.year)
         seculo, ano = [ int(atual[slice(*pos)]) for pos in [(0,2), (2,4)] ]
         if int(abrev) > ano:
@@ -228,9 +231,13 @@ class NoSeuTempo:
         return int(f'{seculo}{abrev}')
     
     def busca_ano_numerico(self, regex: str='') -> str:
-        return fr'({regex})\s+de\s+(\d+)'
+        if regex:
+            return fr'({regex})\s+d[eo]\s+(.*)'
+        return r'()\bde\s+(\d+)'
 
     def extrai_ano(self, expr: str) -> int:
+        if expr.isnumeric():
+            return self.converte_ano_abrev(expr)
         encontrado = re.findall(self.busca_ano_numerico(), expr)
         if encontrado:
             return self.converte_ano_abrev(
@@ -308,7 +315,7 @@ class NoSeuTempo:
             self.data_fixa, self.data_por_nome,
             self.data_relativa, self.data_ultimo_dia,
             self.data_apenas_dia, self.data_por_posicao_calend,
-            self.data_aproximada, self.data_feriado,            
+            self.data_feriado, self.data_aproximada,
         )
         for func in METODOS:
             data = func(txt)
@@ -320,36 +327,42 @@ class NoSeuTempo:
     @classmethod
     def testar(cls):
         TESTES = [
-            ('16/7/2023',                        '2023-07-16'),
-            ('hoje',                             '2025-09-01'),
-            ('ontem',                            '2025-08-31'),
-            ('anteontem',                        '2025-08-30'),
-            ('amanhã',                           '2025-09-02'),
-            ('em 3 dias',                        '2025-09-04'),
-            ('2 semanas atrás',                  '2025-08-18'),
-            ('25 de novembro de 2024',           '2024-11-25'),
-            ('25 de novembro',                   '2025-11-25'),
-            ('dia  14',                          '2025-09-14'),
-            ('25/nov',                           '2025-11-25'),
-            ('próxima semana',                   '2025-09-08'),
-            ('mês passado',                      '2025-08-01'),
-            ('ano passado',                      '2024-09-01'),
-            ('segunda passada',                  '2025-08-25'),
-            ('última terça',                     '2025-08-26'),
-            ('próxima quarta',                   '2025-09-03'),
-            ('quinta que vem',                   '2025-09-04'),
-            ('último natal',                     '2024-12-25'),
-            ('próximo carnaval',                 '2026-02-17'),
-            ('daqui a 15 dias',                  '2025-09-16'),
-            ('último dia do mês        ',        '2025-09-30'),
-            ('ultimo dia do mês passado',        '2025-08-31'),
-            ('último dia do próximo mes',        '2025-10-31'),
-            ('último dia do mês que vem',        '2025-10-31'),
-            ('último dia de fevereiro  ',        '2025-02-28'),
-            ('primeira segunda-feira de julho',  '2025-07-07'),
-            ('3a ultima quinta               ',  '2025-09-11'),
-            ('segundo domingo do próximo mês ',  '2025-10-12'),
-            ('dia 14 do mes passado',            '2025-08-14'),
+            ('16/7/2023',                           '2023-07-16'),
+            ('hoje',                                '2025-09-01'),
+            ('ontem',                               '2025-08-31'),
+            ('anteontem',                           '2025-08-30'),
+            ('amanhã',                              '2025-09-02'),
+            ('em 3 dias',                           '2025-09-04'),
+            ('2 semanas atrás',                     '2025-08-18'),
+            ('25 de novembro de 2024',              '2024-11-25'),
+            ('25 de novembro',                      '2025-11-25'),
+            ('dia  14',                             '2025-09-14'),
+            ('25/nov',                              '2025-11-25'),
+            ('próxima semana',                      '2025-09-08'),
+            ('mês passado',                         '2025-08-01'),
+            ('ano passado',                         '2024-09-01'),
+            ('segunda passada',                     '2025-08-25'),
+            ('última terça',                        '2025-08-26'),
+            ('próxima quarta',                      '2025-09-03'),
+            ('quinta que vem',                      '2025-09-04'),
+            ('último natal',                        '2024-12-25'),
+            ('próximo carnaval',                    '2026-02-17'),
+            ('daqui a 15 dias',                     '2025-09-16'),
+            ('último dia do mês        ',           '2025-09-30'),
+            ('ultimo dia do mês passado',           '2025-08-31'),
+            ('último dia do próximo mes',           '2025-10-31'),
+            ('último dia do mês que vem',           '2025-10-31'),
+            ('último dia de fevereiro  ',           '2025-02-28'),
+            ('primeira segunda-feira de julho',     '2025-07-07'),
+            ('3a ultima quinta               ',     '2025-09-11'),
+            ('segundo domingo do próximo mês ',     '2025-10-12'),
+            ('dia 14 do mes passado',               '2025-08-14'),
+            ('25 de nov de 47',                     '1947-11-25'),
+            ('25 de nov do ano passado',            '2024-11-25'),
+            ('ultimo dia de fev de 24',             '2024-02-29'),
+            ('Carnaval de 94',                      '1994-02-15'),
+            ('1a segunda-feira de abril de 2023',   '2023-04-03'),
+            ('carnaval do ano passado',             '2024-02-13'),
             #
             # P.S.: Evitar complicações,
             #       ... tipo "35 dias depois da 1a terça antes do carnaval de 2 anos atrás"
@@ -372,23 +385,23 @@ class NoSeuTempo:
         print('  +-------------------------------------+------------+----------------------------+')
         print('\n      (Resultado: 100% de sucesso!) \n')
         print('  ===============================================================================')
+        cls.DT_ATUAL = None
+
+    @classmethod
+    def prompt(cls):
+        param = 'hoje'
+        print('-'*50)
+        print('NoSeuTempo - Escreva a data como você fala!')
+        print('-'*50)
+        while param:
+            obj = cls(param)
+            print('\t{} = {} - ({})'.format(
+                param, obj.data, obj.metodo
+            ))
+            param = input('Digite uma expressão de data (ou VAZIO para encerrar):')
+        print('>>>> Até breve! ;)\n', '*'*50)
 
 
 if __name__ == "__main__":
     # NoSeuTempo.testar()
-    """
-    Sugestões:
-        * Carnaval de 94
-        * primeira segunda-feira de abril de 2023
-    """
-    param = 'hoje'
-    print('-'*50)
-    print('NoSeuTempo - Escreva a data como você fala!')
-    print('-'*50)
-    while param:
-        obj = NoSeuTempo(param)
-        print('\t{} = {} - ({})'.format(
-            param, obj.data, obj.metodo
-        ))
-        param = input('Digite uma expressão de data (ou VAZIO para encerrar):')
-    print('>>>> Até breve! ;)\n', '*'*50)
+    NoSeuTempo.prompt()
