@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name = 'no_seu_tempo',
-    version = '1.20250806',
+    version = '1.20250807',
     author = 'Júlio Cascalles',
     author_email = 'julio.cascalles@outlook.com',
     packages = ['no_seu_tempo'],

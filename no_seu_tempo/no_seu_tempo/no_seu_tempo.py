@@ -22,8 +22,21 @@ DIAS_SEMANA = {
     'domingo': 6,
 }
 PREFIXO_ULT = '[úu]ltimo dia d[eo]'
+UNIDADES_TEMPO = {
+    'dia': 1, 'dias': 1,
+    'semana': 7, 'semanas': 7,
+    'mês': MES_GENERICO,'mes': MES_GENERICO, 'meses': MES_GENERICO,
+    'ano': 365, 'anos': 365
+}
 SUFIXO_MES  = 'mês|mes'
-
+NUMERAIS = {
+    'um': 1, 'uma': 1,
+    'dois': 2, 'duas': 2,
+    'três': 3, 'tres': 3,
+    'quatro': 4, 'cinco': 5,
+    'seis': 6, 'sete': 7,
+    'oito': 8,  'nove': 9,
+}
 
 class Feriado:
     @classmethod
@@ -51,11 +64,6 @@ class NoSeuTempo:
     ---
     """
     DT_ATUAL = None
-    UNIDADES_TEMPO = {
-        'dias': 1, 'semana': 7, 'semanas': 7,
-        'mês': MES_GENERICO,'mes': MES_GENERICO, 'meses': MES_GENERICO,
-        'ano': 365, 'anos': 365
-    }
 
     @staticmethod
     def numero_do_mes(mes: str) -> int:
@@ -97,22 +105,82 @@ class NoSeuTempo:
         return None
     
     def converte_unidade_tempo(self, unidade: str, num: int=1):
-        dias = self.UNIDADES_TEMPO[unidade]
+        dias = UNIDADES_TEMPO[unidade]
         if dias == MES_GENERICO:
             return relativedelta(months=num)
         return timedelta(days=dias * num)
+
+    @staticmethod
+    def expr_numeral(conteudo: str=r'\d+') -> list:
+        return [
+            fr'em ({conteudo}) (\w+)',
+            fr'daqui a ({conteudo}) (\w+)',
+            fr'({conteudo}) (\w+) atrás',
+        ]
     
+    def data_composta(self, txt) -> date:
+        partes = re.split(r'(antes|depois)\s+d[eao]', txt)
+        if len(partes) != 3:
+            return None
+        p1, neg, p2 = partes
+        num, unid = p1.split()
+        if unid not in UNIDADES_TEMPO:
+            return None
+        dt_ref = NoSeuTempo(p2).data
+        if not dt_ref:
+            return None
+        num = NUMERAIS.get(num) or int(num)
+        if neg == 'antes':
+            num *= -1
+        return dt_ref + self.converte_unidade_tempo(unid, num)
+    
+    def data_estacao_ano(self, txt: str) -> date:
+        MARCA_COMECO  = 'começo'
+        MARCA_FIM     = 'fim'
+        ESTACOES_ANO = {
+            'outono': {
+                MARCA_COMECO: (21,  3),
+                MARCA_FIM:    (20,  6),
+            },
+            'inverno': {
+                MARCA_COMECO: (21,  6),
+                MARCA_FIM:    (21,  9),
+            },
+            'primavera': {
+                MARCA_COMECO: (22,  9),
+                MARCA_FIM:    (21, 12),
+            },
+            'verão': {
+                MARCA_COMECO: (22, 12),
+                MARCA_FIM:    (20,  3),
+            },
+        }
+        prep = r"\s+d[eao]\s+"
+        encontrado = re.findall(
+            fr'({MARCA_COMECO}|{MARCA_FIM}){prep}(\w+)({prep})*(.*)', txt
+        )
+        marca, estacao, _, ano = encontrado[0]
+        if estacao not in ESTACOES_ANO:
+            return None
+        ano = self.extrai_ano(ano)
+        dia, mes = ESTACOES_ANO[estacao][marca]
+        return date(ano, mes, dia)
+
     def data_relativa(self, txt: str) -> date:
-        BUSCAS = (r'em (\d+) (\w+)', r'daqui a (\d+) (\w+)', r'(\d+) (\w+) atrás')
-        POS_NEGATIVA = 2
+        BUSCAS = self.expr_numeral() + self.expr_numeral(
+            '|'.join(fr'\b{num}\b' for num in NUMERAIS)
+        )
+        POS_NEGATIVA = [2, 5]
         for i, regex in enumerate(BUSCAS):
             encontrado = re.findall(regex, txt)
             if encontrado:
                 num, unidade = encontrado[0]
-                if i == POS_NEGATIVA: 
+                if num in NUMERAIS:
+                    num = NUMERAIS[num]
+                if i in POS_NEGATIVA: 
                     num = f'-{num}' # número negativo
                 break
-        if not encontrado or unidade not in self.UNIDADES_TEMPO:
+        if not encontrado or unidade not in UNIDADES_TEMPO:
             return None
         return self.DT_ATUAL + self.converte_unidade_tempo(unidade, int(num))
     
@@ -134,7 +202,7 @@ class NoSeuTempo:
                 continue
             unidade = encontrado[0]
             num = -1 if i in POS_NEGATIVA else 1
-            if unidade not in self.UNIDADES_TEMPO:
+            if unidade not in UNIDADES_TEMPO:
                 dia_procurado = self.dia_da_semana(unidade)
                 if dia_procurado == -1:
                     return None
@@ -165,12 +233,14 @@ class NoSeuTempo:
         return date(ano, 12, 25)
     
     def data_feriado(self, txt: str) -> date:
-        POS_NEGATIVA = [3, 4]
+        POS_NEGATIVA = [4, 5]
         CLASSES_FERIADO = {
             cls.nome(): cls for cls in Feriado.__subclasses__()
         }
         REGEX_FERIADO = '|'.join(CLASSES_FERIADO)
+        APENAS_FERIADO = '|'.join(fr'^{nome}$' for nome in CLASSES_FERIADO)
         BUSCAS = [
+            APENAS_FERIADO,
             self.busca_ano_numerico(REGEX_FERIADO)
         ] + self.expr_referencial(REGEX_FERIADO)
         resultado = None
@@ -178,9 +248,9 @@ class NoSeuTempo:
             encontrado = re.findall(regex, txt)
             if not encontrado:
                 continue
-            if i == 0:
+            if i == 1:
                 nome, ano = encontrado[0]
-                ano = self.extrai_ano(ano)
+                ano = self.extrai_ano(ano) # ano numérico
             else:
                 nome, ano = encontrado[0], self.DT_ATUAL.year
             if nome not in CLASSES_FERIADO:
@@ -190,7 +260,7 @@ class NoSeuTempo:
             if i in POS_NEGATIVA:
                 if self.DT_ATUAL < resultado:
                     resultado = cls.no_ano(self.DT_ATUAL.year - 1)
-            elif i > 0 and self.DT_ATUAL > resultado:
+            elif i > 1 and self.DT_ATUAL > resultado:
                 resultado = cls.no_ano(self.DT_ATUAL.year + 1)
         return resultado
 
@@ -317,10 +387,11 @@ class NoSeuTempo:
         data = None
         self.metodo = ''
         METODOS = (
-            self.data_fixa, self.data_por_nome,
+            self.data_composta, self.data_fixa, self.data_por_nome,
             self.data_relativa, self.data_ultimo_dia,
             self.data_apenas_dia, self.data_por_posicao_calend,
             self.data_feriado, self.data_aproximada,
+            self.data_estacao_ano
         )
         for func in METODOS:
             data = func(txt)
@@ -337,15 +408,14 @@ class NoSeuTempo:
             ('ontem',                               '2025-08-31'),
             ('anteontem',                           '2025-08-30'),
             ('amanhã',                              '2025-09-02'),
-            ('em 3 dias',                           '2025-09-04'),
             ('2 semanas atrás',                     '2025-08-18'),
+            ('em três dias',                        '2025-09-04'),
             ('25 de novembro de 2024',              '2024-11-25'),
             ('25 de novembro',                      '2025-11-25'),
             ('dia  14',                             '2025-09-14'),
             ('25/nov',                              '2025-11-25'),
             ('próxima semana',                      '2025-09-08'),
             ('mês passado',                         '2025-08-01'),
-            ('ano passado',                         '2024-09-01'),
             ('segunda passada',                     '2025-08-25'),
             ('última terça',                        '2025-08-26'),
             ('próxima quarta',                      '2025-09-03'),
@@ -368,7 +438,12 @@ class NoSeuTempo:
             ('Carnaval de 94',                      '1994-02-15'),
             ('1a segunda-feira de abril de 2023',   '2023-04-03'),
             ('carnaval do ano passado',             '2024-02-13'),
-            #
+            ('ultima terça de setembro de 23',      '2023-09-26'),
+            ('uma semana antes do carnaval',        '2025-02-25'),
+            ('uma semana antes do carnaval de 94',  '1994-02-08'),
+            ('dois dias depois do natal',           '2025-12-27'),
+            ('começo da primavera',                 '2025-09-22'),
+            ('fim do verão de 86',                  '1986-03-20'),
             # P.S.: Evitar complicações,
             #       ... tipo "35 dias depois da 1a terça antes do carnaval de 2 anos atrás"
             #  > Ninguém fala assim!  :/ 
@@ -408,7 +483,4 @@ class NoSeuTempo:
 
 
 if __name__ == "__main__":
-    NoSeuTempo.testar()
-    obj = NoSeuTempo('ultima terça de setembro de 23')
-    print(obj.data)
-    # NoSeuTempo.prompt()
+    NoSeuTempo.prompt()

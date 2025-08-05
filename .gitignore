@@ -5,3 +5,6 @@
 */__pycache__/*
 __pycache__
 /build
+/build*.*
+*.egg-info/*.*
+/PKG-INFO*.*
