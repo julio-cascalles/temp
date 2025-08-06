@@ -47,10 +47,15 @@ class Feriado:
     def nome(cls):
         return cls.__name__.lower()
 
+class Pascoa(Feriado):
+    @classmethod
+    def no_ano(cls, ano: int) -> date:
+        return easter(ano)
+
 class Carnaval(Feriado):
     @classmethod
     def no_ano(cls, ano: int) -> date:
-        return easter(ano) - timedelta(days=47)
+        return Pascoa.no_ano(ano) - timedelta(days=47)
 
 class Natal(Feriado):
     @classmethod
@@ -68,7 +73,7 @@ class NoSeuTempo:
     @staticmethod
     def numero_do_mes(mes: str) -> int:
         for i, nome in enumerate(NOMES_MESES, 1):
-            regex = fr'^({nome}|{nome[:3]})\b'
+            regex = fr'\b({nome}|{nome[:3]})\b'
             if re.search(regex, mes):
                 return i
         return -1
@@ -159,6 +164,8 @@ class NoSeuTempo:
         encontrado = re.findall(
             fr'({MARCA_COMECO}|{MARCA_FIM}){prep}(\w+)({prep})*(.*)', txt
         )
+        if not encontrado:
+            return None
         marca, estacao, _, ano = encontrado[0]
         if estacao not in ESTACOES_ANO:
             return None
@@ -249,12 +256,6 @@ class NoSeuTempo:
             return self.DT_ATUAL.replace(day=dia)
         mes = self.extrai_mes(resto[0])
         return date(self.DT_ATUAL.year, mes, dia)
-    
-    def carnaval(self, ano: int) -> date:
-        return easter(ano) - timedelta(days=47)
-    
-    def natal(self, ano: int) -> date:
-        return date(ano, 12, 25)
     
     def data_feriado(self, txt: str) -> date:
         POS_NEGATIVA = [4, 5]
@@ -512,4 +513,6 @@ class NoSeuTempo:
 
 
 if __name__ == "__main__":
-    NoSeuTempo.prompt()
+    # NoSeuTempo.prompt()
+    dia_das_maes = NoSeuTempo('segundo domingo de maio').resultado
+    print(dia_das_maes)

@@ -126,7 +126,7 @@ class NoSeuTempo:
         num, unid = p1.split()
         if unid not in UNIDADES_TEMPO:
             return None
-        dt_ref = NoSeuTempo(p2).data
+        dt_ref = NoSeuTempo(p2).resultado
         if not dt_ref:
             return None
         num = NUMERAIS.get(num) or int(num)
@@ -165,6 +165,30 @@ class NoSeuTempo:
         ano = self.extrai_ano(ano)
         dia, mes = ESTACOES_ANO[estacao][marca]
         return date(ano, mes, dia)
+    
+    def data_nascto_por_aniver(self, txt) -> date:
+        sujeito = r'(eu\s+)*'
+        verbo   = r'(fiz|vou fazer|faço)\s+'
+        idade   = r'(\d+\s+)'
+        detalhe = r'(anos\s+)*'
+        adverb  = r'(em|no dia)*'
+        dt_ref  = r'(.*)'
+        encontrado = re.findall(
+            fr'{sujeito}{verbo}{idade}{detalhe}{adverb}{dt_ref}', txt
+        )
+        if not encontrado:
+            return None
+        _, verbo, idade, _, _, dt_ref = encontrado[0]
+        dt_ref = NoSeuTempo(dt_ref).resultado
+        if not dt_ref:
+            return None
+        idade = int(idade)
+        if verbo == 'fiz':
+            if dt_ref.month > self.DT_ATUAL.month:
+                dt_ref = dt_ref.replace(year=self.DT_ATUAL.year - 1)
+        elif dt_ref < self.DT_ATUAL:
+            dt_ref = dt_ref.replace(year=self.DT_ATUAL.year + 1)
+        return dt_ref - relativedelta(years=idade)
 
     def data_relativa(self, txt: str) -> date:
         BUSCAS = self.expr_numeral() + self.expr_numeral(
@@ -387,18 +411,19 @@ class NoSeuTempo:
         data = None
         self.metodo = ''
         METODOS = (
+            self.data_nascto_por_aniver,
             self.data_composta, self.data_fixa, self.data_por_nome,
             self.data_relativa, self.data_ultimo_dia,
             self.data_apenas_dia, self.data_por_posicao_calend,
             self.data_feriado, self.data_aproximada,
-            self.data_estacao_ano
+            self.data_estacao_ano, 
         )
         for func in METODOS:
-            data = func(txt)
-            if data:
+            resultado = func(txt)
+            if resultado:
                 self.metodo = func.__name__
                 break
-        self.data = data
+        self.resultado = resultado
 
     @classmethod
     def testar(cls):
@@ -443,7 +468,11 @@ class NoSeuTempo:
             ('uma semana antes do carnaval de 94',  '1994-02-08'),
             ('dois dias depois do natal',           '2025-12-27'),
             ('começo da primavera',                 '2025-09-22'),
-            ('fim do verão de 86',                  '1986-03-20'),
+            ('fim do verão de 77',                  '1977-03-20'),
+            ("Eu fiz 38 anos em 3 de novembro",     '1986-11-03'),
+            ("Eu faço 29 em 20 de outubro",         '1996-10-20'),
+            ("Eu vou fazer 45 em 12 de março",      '1981-03-12'),
+            ("Eu fiz 25 no dia 30 de abril",        '2000-04-30'),
             # P.S.: Evitar complicações,
             #       ... tipo "35 dias depois da 1a terça antes do carnaval de 2 anos atrás"
             #  > Ninguém fala assim!  :/ 
@@ -459,7 +488,7 @@ class NoSeuTempo:
         print('  +-------------------------------------+------------+----------------------------+')
         for texto, esperado in TESTES:
             obj = cls(texto)
-            resultado = obj.data
+            resultado = obj.resultado
             assert str(resultado) == esperado
             print(f'  | {texto:>35} | {resultado} | {obj.metodo:<26} |')
         print('  +-------------------------------------+------------+----------------------------+')
@@ -476,7 +505,7 @@ class NoSeuTempo:
         while param:
             obj = cls(param)
             print('\t{} = {} - ({})'.format(
-                param, obj.data, obj.metodo
+                param, obj.resultado, obj.metodo
             ))
             param = input('Digite uma expressão de data (ou VAZIO para encerrar):')
         print('>>>> Até breve! ;)\n', '*'*50)
