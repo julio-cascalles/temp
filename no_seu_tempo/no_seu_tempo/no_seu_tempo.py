@@ -39,6 +39,17 @@ NUMERAIS = {
 }
 
 class Feriado:
+    FUNC_FERIADOS = {
+        'ano novo':            lambda ano: date(ano,  1,  1), #'1 de janeiro',
+        'tiradentes':          lambda ano: date(ano,  4, 21), #'21 de abril',
+        # 'dia do trabalhador':  lambda ano: date(ano,  5,  1), #'1 de maio',
+        # 'independência':       lambda ano: date(ano,  9,  7), #'7 de setembro',
+        'finados':             lambda ano: date(ano, 11,  2), #'2 de novembro',
+        # 'republica':           lambda ano: date(ano, 11, 15), #'15 de novembro',
+        # 'consciencia negra':   lambda ano: date(ano, 11, 20), #'20 de novembro',
+        'natal':               lambda ano: date(ano, 12, 25), #'25 de dezembro',
+    }
+
     @classmethod
     def no_ano(cls, ano: int) -> date:
         raise NotImplementedError('Use as classes filhas de Feriado')
@@ -49,22 +60,16 @@ class Feriado:
         Retorna todas as funções de
         feriados num dict por nome:
         """
-        return {
-            'ano novo':            lambda ano: date(ano,  1,  1), #'1 de janeiro',
-            'tiradentes':          lambda ano: date(ano,  4, 21), #'21 de abril',
-            'dia do trabalhador':  lambda ano: date(ano,  5,  1), #'1 de maio',
-            'independência':       lambda ano: date(ano,  9,  7), #'7 de setembro',
-            'finados':             lambda ano: date(ano, 11,  2), #'2 de novembro',
-            'republica':           lambda ano: date(ano, 11, 15), #'15 de novembro',
-            'consciencia negra':   lambda ano: date(ano, 11, 20), #'20 de novembro',
-            'natal':               lambda ano: date(ano, 12, 25), #'25 de dezembro',
-        } | {
-            cls.nome(): cls.no_ano for cls in Feriado.__subclasses__()
-        }
-    
+        return Feriado.FUNC_FERIADOS | {
+            nome: cls.no_ano
+            for cls in Feriado.__subclasses__()
+            for nome in cls.nomes()
+        }    
+
     @classmethod
-    def nome(cls):
-        return cls.__name__.lower()
+    def nomes(cls) -> list:
+        return [ cls.__name__.lower() ]
+    
 # ------ Feriados que precisam de cálculos: -------
 class Pascoa(Feriado):
     @classmethod
@@ -82,8 +87,14 @@ class SextaSanta(Feriado):
         return Pascoa.no_ano(ano) - timedelta(days=2)
 
     @classmethod
-    def nome(cls):
-        return 'sexta-feira santa'
+    def nomes(cls) -> list:
+        SUFIXO = 'feira santa'
+        return [
+            f'sexta-{SUFIXO}',
+            f'sexta {SUFIXO}',
+            f'6a {SUFIXO}',
+            f'6ª {SUFIXO}',
+        ]
 # ----------------------------------------------
 
 
@@ -496,7 +507,8 @@ class NoSeuTempo:
             ("Eu fiz 25 no dia 30 de abril",        '2000-04-30'),
             ("Eu vou fazer 45 em 12 de março",      '1981-03-12'),
             ("Fiz 38 anos em 3 de novembro",        '1986-11-03'),
-            ("sexta-feira santa",                   '2025-04-18')
+            ("sexta-feira santa",                   '2025-04-18'),
+            ("6ª feira santa",                      '2025-04-18'),
             # P.S.: Evitar complicações,
             #       ... tipo "35 dias depois da 1a terça antes do carnaval de 2 anos atrás"
             #  > Ninguém fala assim!  :/ 
@@ -516,7 +528,7 @@ class NoSeuTempo:
             assert str(resultado) == esperado
             print(f'  | {texto:>35} | {resultado} | {obj.metodo:<26} |')
         print('  +-------------------------------------+------------+----------------------------+')
-        print('\n      (Resultado: 100% de sucesso!) \n')
+        print(f'\n      Resultado: 100% de sucesso!\t ({len(TESTES)} testes)\n')
         print('  ===============================================================================')
         cls.DT_ATUAL = None
 
@@ -536,5 +548,4 @@ class NoSeuTempo:
 
 
 if __name__ == "__main__":
-    print(NoSeuTempo('sexta-feira santa').resultado)
-    # NoSeuTempo.prompt()
+    NoSeuTempo.prompt()
