@@ -43,10 +43,29 @@ class Feriado:
     def no_ano(cls, ano: int) -> date:
         raise NotImplementedError('Use as classes filhas de Feriado')
     
+    @staticmethod
+    def todas_funcs() -> dict:
+        """
+        Retorna todas as funções de
+        feriados num dict por nome:
+        """
+        return {
+            'ano novo':            lambda ano: date(ano,  1,  1), #'1 de janeiro',
+            'tiradentes':          lambda ano: date(ano,  4, 21), #'21 de abril',
+            'dia do trabalhador':  lambda ano: date(ano,  5,  1), #'1 de maio',
+            'independência':       lambda ano: date(ano,  9,  7), #'7 de setembro',
+            'finados':             lambda ano: date(ano, 11,  2), #'2 de novembro',
+            'republica':           lambda ano: date(ano, 11, 15), #'15 de novembro',
+            'consciencia negra':   lambda ano: date(ano, 11, 20), #'20 de novembro',
+            'natal':               lambda ano: date(ano, 12, 25), #'25 de dezembro',
+        } | {
+            cls.nome(): cls.no_ano for cls in Feriado.__subclasses__()
+        }
+    
     @classmethod
     def nome(cls):
         return cls.__name__.lower()
-
+# ------ Feriados que precisam de cálculos: -------
 class Pascoa(Feriado):
     @classmethod
     def no_ano(cls, ano: int) -> date:
@@ -57,10 +76,15 @@ class Carnaval(Feriado):
     def no_ano(cls, ano: int) -> date:
         return Pascoa.no_ano(ano) - timedelta(days=47)
 
-class Natal(Feriado):
+class SextaSanta(Feriado):
     @classmethod
     def no_ano(cls, ano: int) -> date:
-        return date(ano, 12, 25)
+        return Pascoa.no_ano(ano) - timedelta(days=2)
+
+    @classmethod
+    def nome(cls):
+        return 'sexta-feira santa'
+# ----------------------------------------------
 
 
 class NoSeuTempo:
@@ -259,11 +283,9 @@ class NoSeuTempo:
     
     def data_feriado(self, txt: str) -> date:
         POS_NEGATIVA = [4, 5]
-        CLASSES_FERIADO = {
-            cls.nome(): cls for cls in Feriado.__subclasses__()
-        }
-        REGEX_FERIADO = '|'.join(CLASSES_FERIADO)
-        APENAS_FERIADO = '|'.join(fr'^{nome}$' for nome in CLASSES_FERIADO)
+        FUNC_FERIADOS = Feriado.todas_funcs()
+        REGEX_FERIADO = '|'.join(FUNC_FERIADOS)
+        APENAS_FERIADO = '|'.join(fr'^{nome}$' for nome in FUNC_FERIADOS)
         BUSCAS = [
             APENAS_FERIADO,
             self.busca_ano_numerico(REGEX_FERIADO)
@@ -278,15 +300,15 @@ class NoSeuTempo:
                 ano = self.extrai_ano(ano) # ano numérico
             else:
                 nome, ano = encontrado[0], self.DT_ATUAL.year
-            if nome not in CLASSES_FERIADO:
+            if nome not in FUNC_FERIADOS:
                 continue
-            cls = CLASSES_FERIADO[nome]
-            resultado = cls.no_ano(ano)
+            func = FUNC_FERIADOS[nome]
+            resultado = func(ano)
             if i in POS_NEGATIVA:
                 if self.DT_ATUAL < resultado:
-                    resultado = cls.no_ano(self.DT_ATUAL.year - 1)
+                    resultado = func(self.DT_ATUAL.year - 1)
             elif i > 1 and self.DT_ATUAL > resultado:
-                resultado = cls.no_ano(self.DT_ATUAL.year + 1)
+                resultado = func(self.DT_ATUAL.year + 1)
         return resultado
 
     def extrai_mes(self, nome: str) -> int:
@@ -470,10 +492,11 @@ class NoSeuTempo:
             ('dois dias depois do natal',           '2025-12-27'),
             ('começo da primavera',                 '2025-09-22'),
             ('fim do verão de 77',                  '1977-03-20'),
-            ("Eu fiz 38 anos em 3 de novembro",     '1986-11-03'),
             ("Eu faço 29 em 20 de outubro",         '1996-10-20'),
-            ("Eu vou fazer 45 em 12 de março",      '1981-03-12'),
             ("Eu fiz 25 no dia 30 de abril",        '2000-04-30'),
+            ("Eu vou fazer 45 em 12 de março",      '1981-03-12'),
+            ("Fiz 38 anos em 3 de novembro",        '1986-11-03'),
+            ("sexta-feira santa",                   '2025-04-18')
             # P.S.: Evitar complicações,
             #       ... tipo "35 dias depois da 1a terça antes do carnaval de 2 anos atrás"
             #  > Ninguém fala assim!  :/ 
@@ -513,6 +536,5 @@ class NoSeuTempo:
 
 
 if __name__ == "__main__":
+    print(NoSeuTempo('sexta-feira santa').resultado)
     # NoSeuTempo.prompt()
-    dia_das_maes = NoSeuTempo('segundo domingo de maio').resultado
-    print(dia_das_maes)

@@ -1,6 +1,6 @@
 [project]
 name = "no_seu_tempo"
-version = "1.20250808"
+version = "1.20250810"
 authors = [
   { name="Julio Cascalles", email="julio.cascalles@outlook.com" },
 ]
@@ -14,4 +14,4 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/julio-cascalles/temp\no_seu_tempo"
+Homepage = "https://github.com/julio-cascalles/temp/no_seu_tempo"
