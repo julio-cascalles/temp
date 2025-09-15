@@ -548,4 +548,5 @@ class NoSeuTempo:
 
 
 if __name__ == "__main__":
-    NoSeuTempo.prompt()
+    print( NoSeuTempo('última terça de abril').resultado )
+    # NoSeuTempo.prompt()

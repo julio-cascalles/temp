@@ -1,10 +1,10 @@
-/no_seu_tempo.egg-info
-/dist
-/dist*.*
-/.ipynb_checkpoints
+/*.egg-info
+*/dist
+*/dist*.*
+*/.ipynb_checkpoints
 */__pycache__/*
 __pycache__
-/build
-/build*.*
-*.egg-info/*.*
+*/build
+*/build*.*
+*.egg-info*
 /PKG-INFO*.*
