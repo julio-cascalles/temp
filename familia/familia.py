@@ -2,13 +2,22 @@ PAIS   = 'pais'
 FILHOS = 'filhos'
 IRMAOS = 'irmãos'
 
-
 class Pessoa:
-    contador: int = 0
+    """
+    Gerencia os níveis de parentesco, em cascata:
+    > Atribuir pai e mãe para uma pessoa implica em...
+    1. Marcar como avós os pais do pai e os pais da mãe;
+    2. Marcar como tios os irmãos do pai e irmãos da mãe;
+    3. Marcar como irmãos os outros filhos do mesmo pai ou mesma mãe;
+    4. Marcar a pessoa como neto(a) das pessoas do item #1;
+    5. Marcar a pessoa como sobrinho(a) das pessoas do item #2;
+    6. Marcar como irmã(o) das pessoas do item #3
+    """
+    contagem: int = 0
 
     def __init__(self, nome: str, pai: 'Pessoa'=None, mae: 'Pessoa'=None):
-        Pessoa.contador += 1
-        self.id = self.contador
+        Pessoa.contagem += 1
+        self.id = self.contagem
         self.nome = nome
         self.parentesco = {}
         if not pai or not mae:
@@ -64,8 +73,6 @@ class Pessoa:
         return [
             Pessoa('Camila', Roberto, Manoela),
             Pessoa('Zelia', Guilherme, Sofia),
-            Roberto, Manoela,
-            Guilherme, Sofia,
         ]
 
 
